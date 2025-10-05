@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planificador de Actores - Teatro</title>
+    <style>
+        body {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin: 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .control-panel {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .control-panel button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            color: white;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .control-panel button:hover {
+            opacity: 0.85;
+        }
+
+        .reset-btn { background: #e53e3e; }
+        .edit-actors-btn { background: #3182ce; }
+        .edit-plays-btn { background: #d69e2e; }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 30px;
+            align-items: start;
+        }
+
+        .actors-panel {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 20px;
+        }
+
+        .panel-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #4a5568;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel-title::before {
+            content: "🎭";
+            font-size: 1.5rem;
+        }
+
+        .actors-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-height: 200px;
+            padding: 15px;
+            border: 2px dashed #e2e8f0;
+            border-radius: 12px;
+            background: #f8fafc;
+        }
+
+        .actor-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            cursor: grab;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .actor-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            border-color: #667eea;
+        }
+
+        .actor-card.dragging {
+            opacity: 0.5;
+            transform: rotate(5deg);
+            cursor: grabbing;
+        }
+
+        .actor-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .actor-info {
+            flex: 1;
+        }
+
+        .actor-name {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 2px;
+        }
+
+        .actor-role {
+            font-size: 0.85rem;
+            color: #718096;
+        }
+
+        .plays-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+        }
+
+        .play-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .play-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .play-header {
+            margin-bottom: 20px;
+        }
+
+        .play-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+
+        .play-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            color: #718096;
+        }
+
+        .capacity-badge {
+            background: #e2e8f0;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .capacity-badge.full {
+            background: #fed7d7;
+            color: #c53030;
+        }
+
+        .drop-zone {
+            min-height: 120px;
+            border: 2px dashed #cbd5e0;
+            border-radius: 12px;
+            padding: 15px;
+            background: #f7fafc;
+            transition: all 0.3s ease;
+        }
+
+        .drop-zone.drag-over {
+            border-color: #667eea;
+            background: #edf2f7;
+            transform: scale(1.02);
+        }
+
+        .drop-zone.full {
+            border-color: #fc8181;
+            background: #fed7d7;
+        }
+
+        .assigned-actors {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .assigned-actor {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: #667eea;
+            color: white;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .remove-actor {
+            background: rgba(255,255,255,0.3);
+            border: none;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .remove-actor:hover {
+            background: rgba(255,255,255,0.5);
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #a0aec0;
+            font-style: italic;
+            padding: 20px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #e2e8f0;
+            font-size: 0.9rem;
+            color: #718096;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .actors-panel {
+                position: static;
+            }
+            
+            .plays-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Planificador de Actores</h1>
+            <p>Arrastra y suelta actores en las obras de teatro</p>
+        </div>
+
+        <!-- Panel de control -->
+        <div class="control-panel">
+            <button class="reset-btn" onclick="resetAssignments()">Reiniciar Asignaciones</button>
+            <button class="edit-actors-btn" onclick="editActors()">Editar Actores</button>
+            <button class="edit-plays-btn" onclick="editPlays()">Editar Obras</button>
+        </div>
+
+        <div class="dashboard">
+            <div class="actors-panel">
+                <h2 class="panel-title">Actores Disponibles</h2>
+                <div class="actors-list" id="actorsList">
+                    <div class="actor-card" draggable="true" data-actor-id="1">
+                        <div class="actor-avatar">AM</div>
+                        <div class="actor-info">
+                            <div class="actor-name">Ana Martínez</div>
+                            <div class="actor-role">Protagonista</div>
+                        </div>
+                    </div>
+                    <div class="actor-card" draggable="true" data-actor-id="2">
+                        <div class="actor-avatar">CG</div>
+                        <div class="actor-info">
+                            <div class="actor-name">Carlos García</div>
+                            <div class="actor-role">Secundario</div>
+                        </div>
+                    </div>
+                    <div class="actor-card" draggable="true" data-actor-id="3">
+                        <div class="actor-avatar">LR</div>
+                        <div class="actor-info">
+                            <div class="actor-name">Laura Rodríguez</div>
+                            <div class="actor-role">Protagonista</div>
+                        </div>
+                    </div>
+                    <div class="actor-card" draggable="true" data-actor-id="4">
+                        <div class="actor-avatar">MF</div>
+                        <div class="actor-info">
+                            <div class="actor-name">Miguel Fernández</div>
+                            <div class="actor-role">Reparto</div>
+                        </div>
+                    </div>
+                    <div class="actor-card" draggable="true" data-actor-id="5">
+                        <div class="actor-avatar">SP</div>
+                        <div class="actor-info">
+                            <div class="actor-name">Sofía Pérez</div>
+                            <div class="actor-role">Secundario</div>
+                        </div>
+                    </div>
+                    <div class="actor-card" draggable="true" data-actor-id="6">
+                        <div class="actor-avatar">JL</div>
+                        <div class="actor-info">
+                            <div class="actor-name">Javier López</div>
+                            <div class="actor-role">Reparto</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="stats">
+                    <span>Total: <span id="totalActors">6</span></span>
+                    <span>Asignados: <span id="assignedCount">0</span></span>
+                </div>
+                <div style="margin-top:20px; text-align:center;">
+                    <button onclick="addActor()" style="padding:8px 16px; background:#667eea; color:white; border:none; border-radius:8px; cursor:pointer; margin-right:10px;">Agregar Actor</button>
+                    <button onclick="addPlay()" style="padding:8px 16px; background:#764ba2; color:white; border:none; border-radius:8px; cursor:pointer;">Agregar Obra</button>
+                </div>
+            </div>
+
+            <div class="plays-grid" id="playsGrid">
+                <div class="play-card">
+                    <div class="play-header">
+                        <h3 class="play-title">Romeo y Julieta</h3>
+                        <div class="play-info">
+                            <span>Acto I, Escena 1</span>
+                            <span class="capacity-badge" data-current="0" data-max="3">0/3 actores</span>
+                        </div>
+                    </div>
+                    <div class="drop-zone" data-play-id="romeo" data-max-actors="3">
+                        <div class="assigned-actors" id="romeo-actors"></div>
+                        <div class="empty-state">Arrastra actores aquí</div>
+                    </div>
+                </div>
+
+                <div class="play-card">
+                    <div class="play-header">
+                        <h3 class="play-title">Hamlet</h3>
+                        <div class="play-info">
+                            <span>Acto II, Escena 2</span>
+                            <span class="capacity-badge" data-current="0" data-max="4">0/4 actores</span>
+                        </div>
+                    </div>
+                    <div class="drop-zone" data-play-id="hamlet" data-max-actors="4">
+                        <div class="assigned-actors" id="hamlet-actors"></div>
+                        <div class="empty-state">Arrastra actores aquí</div>
+                    </div>
+                </div>
+
+                <div class="play-card">
+                    <div class="play-header">
+                        <h3 class="play-title">La Casa de Bernarda Alba</h3>
+                        <div class="play-info">
+                            <span>Acto I, Escena 3</span>
+                            <span class="capacity-badge" data-current="0" data-max="2">0/2 actores</span>
+                        </div>
+                    </div>
+                    <div class="drop-zone" data-play-id="bernarda" data-max-actors="2">
+                        <div class="assigned-actors" id="bernarda-actors"></div>
+                        <div class="empty-state">Arrastra actores aquí</div>
+                    </div>
+                </div>
+
+                <div class="play-card">
+                    <div class="play-header">
+                        <h3 class="play-title">Don Juan Tenorio</h3>
+                        <div class="play-info">
+                            <span>Acto III, Escena 1</span>
+                            <span class="capacity-badge" data-current="0" data-max="5">0/5 actores</span>
+                        </div>
+                    </div>
+                    <div class="drop-zone" data-play-id="donjuan" data-max-actors="5">
+                        <div class="assigned-actors" id="donjuan-actors"></div>
+                        <div class="empty-state">Arrastra actores aquí</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

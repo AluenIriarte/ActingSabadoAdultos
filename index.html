@@ -23,7 +23,7 @@
 
         .header {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 40px;
             color: white;
         }
 
@@ -38,31 +38,6 @@
             opacity: 0.9;
             margin-top: 10px;
         }
-
-        .control-panel {
-            margin-bottom: 20px;
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-
-        .control-panel button {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            color: white;
-            font-weight: 500;
-            transition: all 0.2s ease;
-        }
-
-        .control-panel button:hover {
-            opacity: 0.85;
-        }
-
-        .reset-btn { background: #e53e3e; }
-        .edit-actors-btn { background: #3182ce; }
-        .edit-plays-btn { background: #d69e2e; }
 
         .dashboard {
             display: grid;
@@ -303,13 +278,6 @@
         <div class="header">
             <h1>Planificador de Actores</h1>
             <p>Arrastra y suelta actores en las obras de teatro</p>
-        </div>
-
-        <!-- Panel de control -->
-        <div class="control-panel">
-            <button class="reset-btn" onclick="resetAssignments()">Reiniciar Asignaciones</button>
-            <button class="edit-actors-btn" onclick="editActors()">Editar Actores</button>
-            <button class="edit-plays-btn" onclick="editPlays()">Editar Obras</button>
         </div>
 
         <div class="dashboard">

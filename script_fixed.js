@@ -299,9 +299,36 @@ function saveToLocalStorage() {
         maxActors: parseInt(play.querySelector('.drop-zone').dataset.maxActors)
     }));
 
+    // Guardar en localStorage como backup
     localStorage.setItem('actorsData', JSON.stringify(actorsData));
     localStorage.setItem('playsData', JSON.stringify(playsData));
     localStorage.setItem('assignments', JSON.stringify(assignments));
+
+    // Guardar en data.js
+    const fileContent = `// Datos actualizados ${new Date().toLocaleString()}\n\n` +
+        `const defaultActors = ${JSON.stringify(actorsData, null, 2)};\n\n` +
+        `const defaultPlays = ${JSON.stringify(playsData, null, 2)};\n`;
+
+    // Usar fetch para guardar el archivo
+    fetch('/saveData', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: fileContent })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccessMessage('¡Cambios guardados correctamente!');
+        } else {
+            showErrorMessage('Error al guardar los cambios. Los datos están en localStorage como respaldo.');
+        }
+    })
+    .catch(error => {
+        console.error('Error al guardar:', error);
+        showErrorMessage('Error al guardar los cambios. Los datos están en localStorage como respaldo.');
+    });
 }
 
 function loadFromLocalStorage() {
@@ -485,12 +512,49 @@ function createAssignedActor(actorId, playId) {
     updateCapacityBadge(playId);
 }
 
-function showMessage(message) {
+function showMessage(message, type = 'info') {
     const messageEl = document.createElement('div');
-    messageEl.className = 'message';
+    messageEl.className = `message ${type}`;
     messageEl.textContent = message;
+    
+    // Posicionar el mensaje en la parte superior
+    messageEl.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 500;
+        z-index: 1000;
+        animation: slideIn 0.3s ease;
+    `;
+
+    // Aplicar estilos según el tipo
+    if (type === 'success') {
+        messageEl.style.background = '#10B981';
+        messageEl.style.color = 'white';
+    } else if (type === 'error') {
+        messageEl.style.background = '#EF4444';
+        messageEl.style.color = 'white';
+    } else {
+        messageEl.style.background = '#3B82F6';
+        messageEl.style.color = 'white';
+    }
+
     document.body.appendChild(messageEl);
-    setTimeout(() => messageEl.remove(), 3000);
+    setTimeout(() => {
+        messageEl.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => messageEl.remove(), 300);
+    }, 3000);
+}
+
+function showSuccessMessage(message) {
+    showMessage(message, 'success');
+}
+
+function showErrorMessage(message) {
+    showMessage(message, 'error');
 }
 
 function updateCapacityBadge(playId) {

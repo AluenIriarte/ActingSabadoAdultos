@@ -89,7 +89,7 @@ function initGamesUI(){
       <div class="card-header"><h3>${g.name}</h3><div class="game-meta">${g.objective}</div></div>
       <div class="card-body">
         <div id="game-body-${idx}" class="game-output">Pulsa "Generar" para obtener una consigna</div>
-        <div class="game-actions"><button class="small-btn" id="gen-${idx}">Generar</button><button class="small-btn ghost" id="save-${idx}">Guardar</button><span id="save-ind-${idx}" class="save-indicator"></span></div>
+        <div class="game-actions"><button class="small-btn" id="gen-${idx}">Generar</button></div>
       </div>
     `;
     container.appendChild(card);
@@ -121,12 +121,6 @@ function initGamesUI(){
     genBtn.addEventListener('click', ()=>{
       const val = g.generate(); render(val);
     });
-    saveBtn.addEventListener('click', ()=>{
-      const last = g.generate();
-      const key = `game_save_${idx}`;
-      localStorage.setItem(key, JSON.stringify(last));
-      const ind = document.getElementById(`save-ind-${idx}`);
-      if(ind) ind.textContent = 'Guardado';
-    });
+    // save button removed — no persistent saves in this UI
   });
 }

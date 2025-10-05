@@ -1,536 +1,110 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestor de Teatro</title>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
-    <style>
-        body {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #1a1c2c 0%, #4a2c40 100%);
-            min-height: 100vh;
-            color: #333;
-            position: relative;
-            overflow-x: hidden;
-        }
-
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: url('https://www.transparenttextures.com/patterns/theater-seats.png');
-            opacity: 0.05;
-            pointer-events: none;
-            z-index: 1;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 40px;
-            color: white;
-        }
-
-        .header h1 {
-            font-family: 'Playfair Display', serif;
-            font-size: 3.5rem;
-            margin: 0;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            background: linear-gradient(120deg, #ffd700, #fff9c4);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            position: relative;
-        }
-
-        .header h1::before,
-        .header h1::after {
-            content: '🎭';
-            position: absolute;
-            font-size: 2rem;
-            top: 50%;
-            transform: translateY(-50%);
-            opacity: 0.8;
-        }
-
-        .header h1::before {
-            left: -50px;
-        }
-
-        .header h1::after {
-            right: -50px;
-        }
-
-        .header p {
-            font-size: 1.1rem;
-            opacity: 0.9;
-            margin-top: 10px;
-        }
-
-        .dashboard {
-            display: grid;
-            grid-template-columns: 300px 1fr;
-            gap: 30px;
-            align-items: start;
-        }
-
-        .actors-panel {
-            background: white;
-            border-radius: 16px;
-            padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            position: sticky;
-            top: 20px;
-        }
-
-        .panel-title {
-            font-size: 1.3rem;
-            font-weight: 600;
-            margin-bottom: 20px;
-            color: #4a5568;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .panel-title::before {
-            content: "🎭";
-            font-size: 1.5rem;
-        }
-
-        .actors-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            min-height: 200px;
-            padding: 15px;
-            border: 2px dashed #e2e8f0;
-            border-radius: 12px;
-            background: #f8fafc;
-        }
-
-        .actor-card {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            cursor: grab;
-            transition: all 0.3s ease;
-            border: 2px solid transparent;
-            position: relative;
-        }
-
-        .actor-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-            border-color: #667eea;
-        }
-
-        .actor-card.dragging {
-            opacity: 0.5;
-            transform: rotate(5deg);
-            cursor: grabbing;
-        }
-
-        .actor-avatar {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 1.1rem;
-            flex-shrink: 0;
-        }
-
-        .actor-info {
-            flex: 1;
-        }
-
-        .actor-name {
-            font-weight: 600;
-            color: #2d3748;
-            margin-bottom: 2px;
-        }
-
-        .actor-role {
-            font-size: 0.85rem;
-            color: #718096;
-        }
-
-        .plays-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 25px;
-        }
-
-        .play-card {
-            background: white;
-            border-radius: 16px;
-            padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease;
-        }
-
-        .play-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .play-header {
-            margin-bottom: 20px;
-        }
-
-        .play-title {
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: #2d3748;
-            margin-bottom: 8px;
-        }
-
-        .play-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.9rem;
-            color: #718096;
-        }
-
-        .capacity-badge {
-            background: #e2e8f0;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-weight: 600;
-        }
-
-        .capacity-badge.full {
-            background: #fed7d7;
-            color: #c53030;
-        }
-
-        .drop-zone {
-            min-height: 120px;
-            border: 2px dashed #cbd5e0;
-            border-radius: 12px;
-            padding: 15px;
-            background: #f7fafc;
-            transition: all 0.3s ease;
-        }
-
-        .drop-zone.drag-over {
-            border-color: #667eea;
-            background: #edf2f7;
-            transform: scale(1.02);
-        }
-
-        .drop-zone.full {
-            border-color: #fc8181;
-            background: #fed7d7;
-        }
-
-        .assigned-actors {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .assigned-actor {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
-            background: #667eea;
-            color: white;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            font-weight: 500;
-        }
-
-        .remove-actor {
-            background: rgba(255,255,255,0.3);
-            border: none;
-            color: white;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-        }
-
-        .remove-actor:hover {
-            background: rgba(255,255,255,0.5);
-        }
-
-        .empty-state {
-            text-align: center;
-            color: #a0aec0;
-            font-style: italic;
-            padding: 20px;
-        }
-
-        .stats {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
-            padding-top: 15px;
-            border-top: 1px solid #e2e8f0;
-            font-size: 0.9rem;
-            color: #718096;
-        }
-
-        @media (max-width: 768px) {
-            .dashboard {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-            
-            .actors-panel {
-                position: static;
-            }
-            
-            .plays-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .delete-btn {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(229, 62, 62, 0.1);
-            color: #e53e3e;
-            border: none;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 18px;
-            transition: all 0.2s ease;
-        }
-
-        .delete-btn:hover {
-            background: rgba(229, 62, 62, 0.2);
-        }
-
-        .play-title-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
-        /* Nuevos estilos para la navegación */
-        .nav-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
-            justify-content: center;
-        }
-
-        .nav-tab {
-            padding: 12px 24px;
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .nav-tab:hover {
-            background: rgba(255, 255, 255, 0.3);
-        }
-
-        .nav-tab.active {
-            background: white;
-            color: #764ba2;
-            font-weight: 600;
-        }
-
-        /* Estilos para las secciones */
-        .section {
-            display: none;
-        }
-
-        .section.active {
-            display: block;
-        }
-
-        /* Estilos para la vista de resumen de actores */
-        .actors-summary {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            padding: 20px;
-        }
-
-        .actor-summary-card {
-            background: white;
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-
-        .actor-stats {
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #e2e8f0;
-        }
-
-        .stat-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            color: #4a5568;
-        }
-
-        .stat-value {
-            font-weight: 600;
-            color: #2d3748;
-        }
-
-        .actor-plays-list {
-            margin-top: 15px;
-            font-size: 0.9rem;
-        }
-
-        .actor-plays-list h4 {
-            color: #4a5568;
-            margin-bottom: 8px;
-        }
-
-        .play-tag {
-            display: inline-block;
-            padding: 4px 12px;
-            background: #edf2f7;
-            border-radius: 20px;
-            margin: 2px;
-            font-size: 0.85rem;
-            color: #4a5568;
-        }
-
-        .play-tag.duo {
-            background: #c6f6d5;
-            color: #276749;
-        }
-
-        .play-tag.trio {
-            background: #feebc8;
-            color: #9c4221;
-        }
-
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gestor de Teatro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Gestor de Teatro</h1>
-            <p>Sistema de gestión de actores y obras</p>
-        </div>
-
-        <div class="nav-tabs">
-            <button class="nav-tab active" data-section="assignments">Asignaciones</button>
-            <button class="nav-tab" data-section="summary">Resumen</button>
-        </div>
-
-        <div id="assignments" class="section active">
-            <div class="dashboard">
-                <div class="actors-panel">
-                    <h2 class="panel-title">Actores Disponibles</h2>
-                    <div class="actors-list" id="actorsList">
-                        <!-- Los actores se cargarán dinámicamente -->
-                    </div>
-                    <div class="stats">
-                        <span>Total: <span id="totalActors">0</span></span>
-                        <span>Asignados: <span id="assignedCount">0</span></span>
-                    </div>
-                    <div style="margin-top:20px; text-align:center;">
-                        <button onclick="addActor()" class="action-button" style="background: linear-gradient(45deg, #ffd700, #ffa000);">✨ Agregar Actor</button>
-                        <button onclick="addPlay()" class="action-button" style="background: linear-gradient(45deg, #ff4081, #c51162);">🎬 Agregar Obra</button>
-                        <button onclick="saveChanges()" class="action-button save-button" style="background: linear-gradient(45deg, #00c853, #009624); margin-top: 10px; width: 100%;">💾 Guardar Cambios</button>
-                    </div>
-                    <style>
-                        .action-button {
-                            padding: 12px 24px;
-                            color: white;
-                            border: none;
-                            border-radius: 12px;
-                            cursor: pointer;
-                            font-weight: 600;
-                            margin-right: 10px;
-                            transition: all 0.3s ease;
-                            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-                            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-                        }
-
-                        .action-button:hover {
-                            transform: translateY(-2px);
-                            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-                        }
-
-                        .action-button:active {
-                            transform: translateY(1px);
-                        }
-
-                        .save-button {
-                            animation: pulse 2s infinite;
-                        }
-
-                        @keyframes pulse {
-                            0% {
-                                box-shadow: 0 0 0 0 rgba(0,200,83,0.4);
-                            }
-                            70% {
-                                box-shadow: 0 0 0 10px rgba(0,200,83,0);
-                            }
-                            100% {
-                                box-shadow: 0 0 0 0 rgba(0,200,83,0);
-                            }
-                        }
-                    </style>
-                </div>
-
-                <div class="plays-grid" id="playsGrid">
-                    <!-- Las obras se cargarán dinámicamente -->
-                </div>
-            </div>
-        </div>
-
-        <div id="summary" class="section">
-            <div class="actors-summary" id="actorsSummary">
-                <!-- El resumen de actores se cargará dinámicamente -->
-            </div>
-        </div>
+  <header class="app-header">
+    <div class="brand">
+      <h1>Gestor de Teatro</h1>
+      <p class="subtitle">Organiza obras, actores y entrenamientos — moderno, limpio y práctico</p>
     </div>
+    <nav class="tabs" role="tablist">
+      <button class="tab active" data-tab="actores">Actores</button>
+      <button class="tab" data-tab="obras">Obras</button>
+      <button class="tab" data-tab="clase">Clase de Hoy</button>
+      <button class="tab" data-tab="juegos">Juegos</button>
+    </nav>
+  </header>
+  <div class="hero">
+    <div class="hero-inner">
+      <h2>Teatro • Entrenamiento • Creatividad</h2>
+      <p class="hero-lead">Planifica ensayos, arma tu clase de hoy y entrena con juegos diseñados por actores docentes.</p>
+    </div>
+  </div>
 
-        <script src="data.js"></script>
-    <script src="script_fixed.js"></script>
+  <main class="container">
+    <section id="actores" class="tab-panel">
+      <div class="card actors-card">
+        <header class="card-header">
+          <h2>Actores — Resumen</h2>
+          <div class="search-wrap">
+            <input id="actorSearch" type="search" placeholder="Buscar actor..." />
+          </div>
+        </header>
+        <div id="actorsList" class="card-body actors-list"></div>
+      </div>
+    </section>
+
+    <section id="obras" class="tab-panel" hidden>
+      <div class="card plays-card">
+        <header class="card-header">
+          <h2>Obras — Listado</h2>
+          <div class="controls">
+            <label>Ordenar por
+              <select id="playsSort">
+                <option value="default">Predeterminado</option>
+                <option value="genre">Género</option>
+                <option value="actors">Cantidad de Actores</option>
+              </select>
+            </label>
+          </div>
+        </header>
+        <div id="playsList" class="card-body plays-list"></div>
+      </div>
+    </section>
+
+    <section id="clase" class="tab-panel" hidden>
+      <div class="card clase-card">
+        <header class="card-header">
+          <div style="display:flex;flex-direction:column">
+            <h2>Clase de Hoy</h2>
+            <div style="font-size:13px;color:var(--muted);margin-top:6px">Genera escenas que cubran a todos los presentes. Activa "Agrupación ad-hoc" para crear escenas no ligadas a las obras existentes.</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end">
+            <label style="font-size:13px;color:var(--muted)"><input id="adhocToggle" type="checkbox" /> Agrupación ad-hoc</label>
+            <div class="stats" id="claseStats"><!-- dynamic stats --></div>
+          </div>
+        </header>
+
+        <div class="card-body">
+          <div class="attendance">
+            <h3>Asistencia</h3>
+            <div id="attendanceList" class="attendance-list"></div>
+          </div>
+
+          <div class="actions">
+            <button id="generateClase" class="btn primary">Generar Clase</button>
+            <button id="reshuffleClase" class="btn secondary">Nueva combinación</button>
+          </div>
+
+          <div id="claseResult" class="clase-result"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="juegos" class="tab-panel" hidden>
+      <div class="card">
+        <header class="card-header"><h2>Juegos de Actuación</h2></header>
+        <div class="card-body">
+          <div id="gamesContainer"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <span>Teatro Pro • Diseño elegante • Datos cargados localmente</span>
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="games.js"></script>
+  <script src="script.js" defer></script>
 </body>
 </html>
-``` 

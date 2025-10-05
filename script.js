@@ -356,8 +356,42 @@ document.addEventListener('DOMContentLoaded', () => {
   // Event wiring
   actorSearch.addEventListener('input', e => renderActorsOverview(e.target.value));
   playsSort.addEventListener('change', e => renderPlaysOverview(e.target.value));
-  generateBtn.addEventListener('click', () => generateRandomClase('init'));
-  reshuffleBtn.addEventListener('click', () => generateRandomClase('reshuffle'));
+  generateBtn.addEventListener('click', () => {
+    // explicit full regenerate and allow same fingerprint to be replaced
+    generateRandomClase('init');
+  });
+
+  reshuffleBtn.addEventListener('click', () => {
+    // try to produce a visibly different result from lastClaseFingerprint.
+    // Strategy: if last result was adhoc groups, just reshuffle roles inside scenes;
+    // otherwise force another exact-cover search with a higher randomness seed.
+    // We'll attempt a local reshuffle first to avoid repeating the same output.
+    const currentHTML = claseResult.innerHTML;
+    // if we have lastClaseFingerprint and claseResult contains scenes, try to permute roles locally
+    if(currentHTML && currentHTML.indexOf('clase-scene') !== -1){
+      try{
+        // parse DOM fragment and shuffle roles within each scene if present
+        const wrapper = document.createElement('div'); wrapper.innerHTML = currentHTML;
+        const scenes = wrapper.querySelectorAll('.clase-scene');
+        let changed = false;
+        scenes.forEach(sceneEl => {
+          const meta = sceneEl.querySelector('.meta');
+          if(meta && meta.innerHTML.indexOf('<strong>')!==-1){
+            // pick lines and shuffle order
+            const lines = meta.innerHTML.split('<br/>');
+            if(lines.length>1){
+              const shuffled = lines.sort(()=>Math.random()-0.5).join('<br/>');
+              meta.innerHTML = shuffled; changed = true;
+            }
+          }
+        });
+        if(changed){ claseResult.innerHTML = wrapper.innerHTML; return; }
+      }catch(e){ /* ignore and fallback */ }
+    }
++
+    // fallback: run generateRandomClase with 'reshuffle' which tries to produce a different cover
+    generateRandomClase('reshuffle');
+  });
 
   // Initialize
   renderActorsOverview();

@@ -205,11 +205,11 @@ function removeActor(actorId, playId) {
 }
 
 // Hacer las funciones accesibles globalmente
-globalThis.deleteActor = deleteActor;
-globalThis.deletePlay = deletePlay;
-globalThis.addActor = addActor;
-globalThis.addPlay = addPlay;
-globalThis.removeActor = removeActor;
+window.deleteActor = deleteActor;
+window.deletePlay = deletePlay;
+window.addActor = addActor;
+window.addPlay = addPlay;
+window.removeActor = removeActor;
 
 // Format for assignments: { actorId: { plays: Set of playIds, stats: { total: number, duo: number, trio: number }, scenes: { playId: number } } }
 
@@ -247,10 +247,13 @@ function handleReturnActor(e) {
 // =====================================
 // Navegación
 // =====================================
-document.addEventListener('DOMContentLoaded', () => {
+function initializeApp() {
+    console.log('Inicializando aplicación...');
+    
     // Configurar navegación
     document.querySelectorAll('.nav-tab').forEach(tab => {
         tab.addEventListener('click', () => {
+            console.log('Click en tab:', tab.dataset.section);
             const targetSection = tab.dataset.section;
             
             // Actualizar tabs
@@ -258,8 +261,14 @@ document.addEventListener('DOMContentLoaded', () => {
             tab.classList.add('active');
             
             // Actualizar secciones
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.getElementById(targetSection).classList.add('active');
+            document.querySelectorAll('.section').forEach(s => {
+                console.log('Seccion:', s.id, 'active:', s.id === targetSection);
+                s.style.display = s.id === targetSection ? 'block' : 'none';
+                if (s.id === targetSection) {
+                    s.classList.add('active');
+                } else {
+                    s.classList.remove('active');
+                }
 
             // Si estamos en la sección de resumen, actualizar las estadísticas
             if (targetSection === 'summary') {
@@ -268,20 +277,36 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Intentar cargar datos guardados o usar valores por defecto
-    const savedActors = localStorage.getItem('actorsData');
-    const savedPlays = localStorage.getItem('playsData');
-    
-    if (!savedActors || !savedPlays || JSON.parse(savedActors).length === 0 || JSON.parse(savedPlays).length === 0) {
-        // Si falta algún dato o están vacíos, inicializar con valores por defecto
-        localStorage.clear(); // Limpiar datos parciales
+    try {
+        // Intentar cargar datos guardados o usar valores por defecto
+        const savedActors = localStorage.getItem('actorsData');
+        const savedPlays = localStorage.getItem('playsData');
+        
+        if (!savedActors || !savedPlays || 
+            !Array.isArray(JSON.parse(savedActors)) || 
+            !Array.isArray(JSON.parse(savedPlays)) || 
+            JSON.parse(savedActors).length === 0 || 
+            JSON.parse(savedPlays).length === 0) {
+            
+            console.log('Inicializando con datos por defecto...');
+            localStorage.clear(); // Limpiar datos parciales
+            initializeDefaultData();
+        } else {
+            console.log('Cargando datos guardados...');
+            loadFromLocalStorage();
+        }
+    } catch (error) {
+        console.error('Error al cargar datos:', error);
         initializeDefaultData();
-    } else {
-        loadFromLocalStorage();
     }
     
     initializeDragAndDrop();
     updateStats();
+}
+
+// Inicializar la aplicación cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', () => {
+    initializeApp();
 });
 
 // =====================================
@@ -336,9 +361,14 @@ function saveToLocalStorage() {
 
 function loadFromLocalStorage() {
     try {
+        console.log('Cargando datos desde localStorage...');
         const actorsData = JSON.parse(localStorage.getItem('actorsData') || '[]');
         const playsData = JSON.parse(localStorage.getItem('playsData') || '[]');
         const savedAssignments = JSON.parse(localStorage.getItem('assignments') || '{}');
+
+        if (!Array.isArray(actorsData) || !Array.isArray(playsData)) {
+            throw new Error('Formato de datos inválido');
+        }
         
         // Actualizar contadores
         actorCounter = Math.max(...actorsData.map(a => parseInt(a.id)), 0);

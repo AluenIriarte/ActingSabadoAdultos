@@ -1,5 +1,5 @@
 // Default actors with their information
-const defaultActors = [
+window.defaultActors = [
     { id: 1, name: "Euge", role: "Actor" },
     { id: 2, name: "Guille", role: "Actor" },
     { id: 3, name: "Alan", role: "Actor" },
@@ -13,7 +13,7 @@ const defaultActors = [
 ];
 
 // Default plays with their configurations
-const defaultPlays = [
+window.defaultPlays = [
     { id: "mudanza", title: "Mudanza", maxActors: 2, info: "Obra 1" },
     { id: "monja", title: "Monja Sicaria", maxActors: 2, info: "Obra 2" },
     { id: "fantasma", title: "Fantasma", maxActors: 2, info: "Obra 3" },
@@ -29,5 +29,3 @@ const defaultPlays = [
     { id: "confesion", title: "Confesión", maxActors: 2, info: "Obra 13" },
     { id: "cita", title: "Cita a Ciegas", maxActors: 2, info: "Obra 14" }
 ];
-
-export { defaultActors, defaultPlays };

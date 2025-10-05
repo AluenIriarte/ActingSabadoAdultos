@@ -1,17 +1,248 @@
+import { defaultActors, defaultPlays } from './data.js';
+
 // =====================================
 // Variables globales
 // =====================================
 let draggedActor = null;
-let assignments = {}; // Format: { actorId: { plays: Set of playIds, stats: { total: number, duo: number, trio: number }, scenes: { playId: number } } }
-let actorCounter = 6;  // número inicial de actores
-let playCounter = 4;   // número inicial de obras
+let assignments = {};
+let actorCounter = 10;
+let playCounter = 14;
+
+// =====================================
+// Initialización
+// =====================================
+function initializeDragAndDrop() {
+    document.querySelectorAll('.actor-card').forEach(actor => {
+        actor.addEventListener('dragstart', handleDragStart);
+        actor.addEventListener('dragend', handleDragEnd);
+    });
+
+    document.querySelectorAll('.drop-zone').forEach(dropZone => {
+        dropZone.addEventListener('dragover', handleDragOver);
+        dropZone.addEventListener('dragenter', handleDragEnter);
+        dropZone.addEventListener('dragleave', handleDragLeave);
+        dropZone.addEventListener('drop', handleDrop);
+    });
+}
+
+// =====================================
+// Drag & Drop
+// =====================================
+
+function handleDragStart(e) {
+    draggedActor = this;
+    this.classList.add('dragging');
+}
+
+function handleDragEnd(e) {
+    if (draggedActor) {
+        draggedActor.classList.remove('dragging');
+        draggedActor = null;
+    }
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    this.classList.add('dragover');
+}
+
+function handleDragEnter(e) {
+    e.preventDefault();
+    this.classList.add('dragover');
+}
+
+function handleDragLeave(e) {
+    this.classList.remove('dragover');
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    this.classList.remove('dragover');
+    
+    if (!draggedActor) return;
+    
+    const dropZone = e.target.closest('.drop-zone');
+    if (!dropZone) return;
+    
+    const playId = dropZone.dataset.playId;
+    const maxActors = parseInt(dropZone.dataset.maxActors);
+    const actorId = draggedActor.dataset.actorId;
+    
+    const currentAssigned = dropZone.querySelectorAll('.assigned-actor').length;
+    if (currentAssigned >= maxActors) {
+        showMessage('No hay más espacio en esta obra');
+        return;
+    }
+    
+    assignActorToPlay(actorId, playId);
+    updateStats();
+}
+
+// =====================================
+// Gestión de Actores y Obras
+// =====================================
+
+function deleteActor(actorId) {
+    const actor = document.querySelector(`[data-actor-id="${actorId}"]`);
+    if (actor) {
+        // Eliminar actor de todas las obras asignadas
+        if (assignments[actorId]) {
+            assignments[actorId].plays.forEach(playId => {
+                removeActorFromPlay(actorId, playId);
+            });
+        }
+        actor.remove();
+        delete assignments[actorId];
+        updateStats();
+        saveToLocalStorage();
+    }
+}
+
+function deletePlay(playId) {
+    const play = document.querySelector(`[data-play-id="${playId}"]`);
+    if (play) {
+        // Actualizar assignments para los actores afectados
+        Object.entries(assignments).forEach(([actorId, data]) => {
+            if (data.plays.has(playId)) {
+                data.plays.delete(playId);
+                delete data.scenes[playId];
+                updateActorStats(actorId);
+            }
+        });
+        play.remove();
+        updateStats();
+        saveToLocalStorage();
+    }
+}
+
+function addActor() {
+    const name = prompt('Nombre del actor:');
+    if (!name) return;
+    
+    const role = prompt('Rol del actor:', 'Estudiante');
+    if (!role) return;
+    
+    actorCounter++;
+    const actor = {
+        id: actorCounter,
+        name: name,
+        role: role
+    };
+    
+    const initials = name[0].toUpperCase();
+    const actorCard = document.createElement('div');
+    actorCard.className = 'actor-card';
+    actorCard.draggable = true;
+    actorCard.dataset.actorId = actor.id;
+    actorCard.innerHTML = `
+        <div class="actor-avatar">${initials}</div>
+        <div class="actor-info">
+            <div class="actor-name">${actor.name}</div>
+            <div class="actor-role">${actor.role}</div>
+        </div>
+        <button class="delete-btn" onclick="deleteActor(${actor.id})">×</button>
+    `;
+    
+    document.getElementById('actorsList').appendChild(actorCard);
+    actorCard.addEventListener('dragstart', handleDragStart);
+    actorCard.addEventListener('dragend', handleDragEnd);
+    
+    assignments[actor.id] = {
+        plays: new Set(),
+        stats: { total: 0, duo: 0, trio: 0 },
+        scenes: {}
+    };
+    
+    saveToLocalStorage();
+}
+
+function addPlay() {
+    const title = prompt('Título de la obra:');
+    if (!title) return;
+    
+    const info = prompt('Información adicional:', 'Nueva obra');
+    if (!info) return;
+    
+    const maxActors = parseInt(prompt('Número máximo de actores:', '2')) || 2;
+    
+    playCounter++;
+    const playId = `custom${playCounter}`;
+    
+    const playCard = document.createElement('div');
+    playCard.className = 'play-card';
+    playCard.dataset.playId = playId;
+    playCard.innerHTML = `
+        <div class="play-header">
+            <div class="play-title-row">
+                <h3 class="play-title">${title}</h3>
+                <button class="delete-btn" onclick="deletePlay('${playId}')">×</button>
+            </div>
+            <div class="play-info">
+                <span>${info}</span>
+                <span class="capacity-badge" data-current="0" data-max="${maxActors}">0/${maxActors} actores</span>
+            </div>
+        </div>
+        <div class="drop-zone" data-play-id="${playId}" data-max-actors="${maxActors}">
+            <div class="assigned-actors" id="${playId}-actors"></div>
+            <div class="empty-state">Arrastra actores aquí</div>
+        </div>
+    `;
+    
+    document.getElementById('playsGrid').appendChild(playCard);
+    const dropZone = playCard.querySelector('.drop-zone');
+    dropZone.addEventListener('dragover', handleDragOver);
+    dropZone.addEventListener('dragenter', handleDragEnter);
+    dropZone.addEventListener('dragleave', handleDragLeave);
+    dropZone.addEventListener('drop', handleDrop);
+    
+    saveToLocalStorage();
+}
+
+function removeActor(actorId, playId) {
+    removeActorFromPlay(actorId, playId);
+    updateStats();
+    saveToLocalStorage();
+}
 
 // Hacer las funciones accesibles globalmente
-window.deleteActor = deleteActor;
-window.deletePlay = deletePlay;
-window.addActor = addActor;
-window.addPlay = addPlay;
-window.removeActor = removeActor;
+globalThis.deleteActor = deleteActor;
+globalThis.deletePlay = deletePlay;
+globalThis.addActor = addActor;
+globalThis.addPlay = addPlay;
+globalThis.removeActor = removeActor;
+
+// Format for assignments: { actorId: { plays: Set of playIds, stats: { total: number, duo: number, trio: number }, scenes: { playId: number } } }
+
+// =====================================
+// Navegación
+// =====================================
+
+// =====================================
+// Funciones de ayuda
+// =====================================
+
+// Función para mostrar mensajes
+function showMessage(message) {
+    const messageEl = document.createElement('div');
+    messageEl.className = 'message';
+    messageEl.textContent = message;
+    document.body.appendChild(messageEl);
+    setTimeout(() => messageEl.remove(), 3000);
+}
+
+// Función para retornar un actor a la lista
+function handleReturnActor(e) {
+    e.preventDefault();
+    if (!draggedActor || !draggedActor.classList.contains('assigned-actor')) return;
+
+    const actorId = draggedActor.dataset.actorId;
+    const playId = draggedActor.closest('.drop-zone').dataset.playId;
+    
+    removeActor(actorId, playId);
+    saveToLocalStorage();
+    updateStats();
+    updateActorsSummary();
+}
 
 // =====================================
 // Navegación
@@ -37,50 +268,174 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Limpiar datos guardados y comenzar con los valores por defecto
-    localStorage.clear();
-    initializeDefaultData();
+    // Intentar cargar datos guardados o usar valores por defecto
+    const savedActors = localStorage.getItem('actorsData');
+    const savedPlays = localStorage.getItem('playsData');
+    
+    if (!savedActors || !savedPlays || JSON.parse(savedActors).length === 0 || JSON.parse(savedPlays).length === 0) {
+        // Si falta algún dato o están vacíos, inicializar con valores por defecto
+        localStorage.clear(); // Limpiar datos parciales
+        initializeDefaultData();
+    } else {
+        loadFromLocalStorage();
+    }
     
     initializeDragAndDrop();
     updateStats();
 });
 
 // =====================================
-// Datos por defecto
+// Helper Functions
 // =====================================
+
+function handleDrop(e) {
+    e.preventDefault();
+    this.classList.remove('dragover');
+    
+    if (!draggedActor) return;
+    
+    const dropZone = e.target.closest('.drop-zone');
+    if (!dropZone) return;
+    
+    const playId = dropZone.dataset.playId;
+    const maxActors = parseInt(dropZone.dataset.maxActors);
+    const actorId = draggedActor.dataset.actorId;
+    
+    const currentAssigned = dropZone.querySelectorAll('.assigned-actor').length;
+    if (currentAssigned >= maxActors) {
+        showMessage('No hay más espacio en esta obra');
+        return;
+    }
+    
+    assignActorToPlay(actorId, playId);
+    updateStats();
+}
+
+// =====================================
+// Helper Functions
+// =====================================
+
+function saveToLocalStorage() {
+    const actorsData = Array.from(document.querySelectorAll('.actor-card')).map(actor => ({
+        id: parseInt(actor.dataset.actorId),
+        name: actor.querySelector('.actor-name').textContent,
+        role: actor.querySelector('.actor-role').textContent
+    }));
+
+    const playsData = Array.from(document.querySelectorAll('.play-card')).map(play => ({
+        id: play.dataset.playId,
+        title: play.querySelector('.play-title').textContent,
+        info: play.querySelector('.play-info span').textContent,
+        maxActors: parseInt(play.querySelector('.drop-zone').dataset.maxActors)
+    }));
+
+    localStorage.setItem('actorsData', JSON.stringify(actorsData));
+    localStorage.setItem('playsData', JSON.stringify(playsData));
+    localStorage.setItem('assignments', JSON.stringify(assignments));
+}
+
+function loadFromLocalStorage() {
+    try {
+        const actorsData = JSON.parse(localStorage.getItem('actorsData') || '[]');
+        const playsData = JSON.parse(localStorage.getItem('playsData') || '[]');
+        const savedAssignments = JSON.parse(localStorage.getItem('assignments') || '{}');
+        
+        // Actualizar contadores
+        actorCounter = Math.max(...actorsData.map(a => parseInt(a.id)), 0);
+        playCounter = Math.max(...playsData.map(p => {
+            const numericId = parseInt(p.playId?.replace(/\D/g, '') || '0');
+            return isNaN(numericId) ? 0 : numericId;
+        }), 0);
+
+        // Limpiar contenedores y estado
+        document.getElementById('actorsList').innerHTML = '';
+        document.getElementById('playsGrid').innerHTML = '';
+        assignments = {};
+
+        // Cargar actores y asignaciones
+        actorsData.forEach(actor => {
+            let actorCard = document.createElement('div');
+            actorCard.className = 'actor-card';
+            actorCard.draggable = true;
+            actorCard.dataset.actorId = actor.id;
+            const initials = actor.name.split(' ').map(n => n[0]).join('').toUpperCase();
+            actorCard.innerHTML = `
+                <div class="actor-avatar">${initials}</div>
+                <div class="actor-info">
+                    <div class="actor-name">${actor.name}</div>
+                    <div class="actor-role">${actor.role}</div>
+                </div>
+                <button class="delete-btn" onclick="deleteActor(${actor.id})">×</button>
+            `;
+            document.getElementById('actorsList').appendChild(actorCard);
+            actorCard.addEventListener('dragstart', handleDragStart);
+            actorCard.addEventListener('dragend', handleDragEnd);
+
+            // Restaurar asignaciones
+            if (actor.assignments && Array.isArray(actor.assignments.plays)) {
+                assignments[actor.id] = {
+                    plays: new Set(actor.assignments.plays),
+                    stats: actor.assignments.stats || { total: 0, duo: 0, trio: 0 },
+                    scenes: actor.assignments.scenes || {}
+                };
+            }
+        });
+
+        // Cargar obras y asignaciones
+        playsData.forEach(play => {
+            const playCard = document.createElement('div');
+            playCard.className = 'play-card';
+            playCard.dataset.playId = play.playId || play.id;
+            playCard.innerHTML = `
+                <div class="play-header">
+                    <div class="play-title-row">
+                        <h3 class="play-title">${play.title}</h3>
+                        <button class="delete-btn" onclick="deletePlay('${play.playId || play.id}')">×</button>
+                    </div>
+                    <div class="play-info">
+                        <span>Escena 1</span>
+                        <span class="capacity-badge" data-current="0" data-max="${play.maxActors || play.max}">0/${play.maxActors || play.max} actores</span>
+                    </div>
+                </div>
+                <div class="drop-zone" data-play-id="${play.playId || play.id}" data-max-actors="${play.maxActors || play.max}">
+                    <div class="assigned-actors" id="${play.playId || play.id}-actors"></div>
+                    <div class="empty-state">Arrastra actores aquí</div>
+                </div>
+            `;
+            document.getElementById('playsGrid').appendChild(playCard);
+
+            const dropZone = playCard.querySelector('.drop-zone');
+            dropZone.addEventListener('dragover', handleDragOver);
+            dropZone.addEventListener('dragenter', handleDragEnter);
+            dropZone.addEventListener('dragleave', handleDragLeave);
+            dropZone.addEventListener('drop', handleDrop);
+
+            // Restaurar asignaciones de actores
+            if (play.assignedActors) {
+                play.assignedActors.forEach(actorId => {
+                    if (assignments[actorId] && assignments[actorId].plays.has(play.playId || play.id)) {
+                        createAssignedActor(actorId, play.playId || play.id);
+                    }
+                });
+            }
+        });
+
+        updateStats();
+        if (document.querySelector('.nav-tab[data-section="summary"]').classList.contains('active')) {
+            updateActorsSummary();
+        }
+    } catch (error) {
+        console.error('Error loading from localStorage:', error);
+        initializeDefaultData();
+    }
+}
+
 function initializeDefaultData() {
-    // Actores por defecto
-    const defaultActors = [
-        { id: 1, name: "Euge", role: "Actor" },
-        { id: 2, name: "Guille", role: "Actor" },
-        { id: 3, name: "Alan", role: "Actor" },
-        { id: 4, name: "Ayelen", role: "Actor" },
-        { id: 5, name: "Franco", role: "Actor" },
-        { id: 6, name: "Axel", role: "Actor" },
-        { id: 7, name: "Euge", role: "Actor" },
-        { id: 8, name: "Lorenzo", role: "Actor" },
-        { id: 9, name: "Camila", role: "Actor" }
-    ];
+    // Resetear contadores basados en los datos importados
+    actorCounter = defaultActors.length;
+    playCounter = defaultPlays.length;
 
-    // Obras por defecto con sus cantidades correctas
-    const defaultPlays = [
-        { id: "mudanza", title: "Mudanza", maxActors: 2, info: "Obra 1" },
-        { id: "monja", title: "Monja Sicaria", maxActors: 2, info: "Obra 2" },
-        { id: "fantasma", title: "Fantasma", maxActors: 2, info: "Obra 3" },
-        { id: "banco", title: "Robo al Banco", maxActors: 3, info: "Obra 4" },
-        { id: "accidente", title: "Accidente", maxActors: 2, info: "Obra 5" },
-        { id: "director", title: "Director y Actrices", maxActors: 3, info: "Obra 6" },
-        { id: "cumple", title: "Cumpleaños Sorpresa", maxActors: 3, info: "Obra 7" },
-        { id: "interrogatorio", title: "Interrogatorio", maxActors: 2, info: "Obra 8" },
-        { id: "herencia", title: "Herencia Nazi", maxActors: 3, info: "Obra 9" },
-        { id: "companeros", title: "Compañeros de Trabajo", maxActors: 2, info: "Obra 10" },
-        { id: "trencito", title: "Trencito de la Alegria", maxActors: 3, info: "Obra 11" },
-        { id: "extraterrestres", title: "Extraterrestres", maxActors: 3, info: "Obra 12" },
-        { id: "confesion", title: "Confesión", maxActors: 2, info: "Obra 13" },
-        { id: "cita", title: "Cita a Ciegas", maxActors: 2, info: "Obra 14" }
-    ];
-
-    // Crear actores
+    // Inicializar actores
     defaultActors.forEach(actor => {
         const initials = actor.name[0].toUpperCase();
         const actorCard = document.createElement('div');
@@ -98,9 +453,15 @@ function initializeDefaultData() {
         document.getElementById('actorsList').appendChild(actorCard);
         actorCard.addEventListener('dragstart', handleDragStart);
         actorCard.addEventListener('dragend', handleDragEnd);
+
+        assignments[actor.id] = {
+            plays: new Set(),
+            stats: { total: 0, duo: 0, trio: 0 },
+            scenes: {}
+        };
     });
 
-    // Crear obras
+    // Inicializar obras
     defaultPlays.forEach(play => {
         const playCard = document.createElement('div');
         playCard.className = 'play-card';
@@ -133,254 +494,151 @@ function initializeDefaultData() {
     saveToLocalStorage();
 }
 
-// =====================================
-// Drag & Drop
-// =====================================
-function initializeDragAndDrop() {
-    // Remover eventos existentes primero
-    const allDroppables = document.querySelectorAll('.drop-zone, .actor-card, .assigned-actor');
-    allDroppables.forEach(element => {
-        element.removeEventListener('dragstart', handleDragStart);
-        element.removeEventListener('dragend', handleDragEnd);
-        element.removeEventListener('dragover', handleDragOver);
-        element.removeEventListener('dragenter', handleDragEnter);
-        element.removeEventListener('dragleave', handleDragLeave);
-        element.removeEventListener('drop', handleDrop);
-    });
-
-    // Agregar eventos a actores
-    const actors = document.querySelectorAll('.actor-card');
-    actors.forEach(actor => {
-        actor.addEventListener('dragstart', handleDragStart);
-        actor.addEventListener('dragend', handleDragEnd);
-    });
-
-    // Agregar eventos a actores asignados
-    const assignedActors = document.querySelectorAll('.assigned-actor');
-    assignedActors.forEach(actor => {
-        actor.addEventListener('dragstart', handleDragStart);
-        actor.addEventListener('dragend', handleDragEnd);
-    });
-
-    // Agregar eventos a zonas de drop
-    const dropZones = document.querySelectorAll('.drop-zone');
-    dropZones.forEach(zone => {
-        zone.addEventListener('dragover', handleDragOver);
-        zone.addEventListener('dragenter', handleDragEnter);
-        zone.addEventListener('dragleave', handleDragLeave);
-        zone.addEventListener('drop', handleDrop);
-    });
-
-    // Agregar eventos a la lista de actores
-    const actorsList = document.getElementById('actorsList');
-    if (actorsList) {
-        actorsList.addEventListener('dragover', handleDragOver);
-        actorsList.addEventListener('drop', handleReturnActor);
-    }
-}
-
-function handleDragStart(e) {
-    draggedActor = e.target;
-    e.target.classList.add('dragging');
-    e.dataTransfer.effectAllowed = 'move';
-}
-
-function handleDragEnd(e) {
-    e.target.classList.remove('dragging');
-    draggedActor = null;
-}
-
-function handleDragOver(e) {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-}
-
-function handleDragEnter(e) {
-    e.preventDefault();
-    if (e.target.classList.contains('drop-zone')) {
-        const maxActors = parseInt(e.target.dataset.maxActors);
-        const currentActors = e.target.querySelectorAll('.assigned-actor').length;
-        if (currentActors < maxActors) e.target.classList.add('drag-over');
-    }
-}
-
-function handleDragLeave(e) {
-    if (e.target.classList.contains('drop-zone')) {
-        e.target.classList.remove('drag-over');
-    }
-}
-
-function handleDrop(e) {
-    e.preventDefault();
-    if (!draggedActor) return;
-
-    // Si el drop fue en un elemento dentro de drop-zone, buscar el drop-zone padre
-    const dropZone = e.target.closest('.drop-zone');
-    if (!dropZone) return;
-
-    // Limpiar el estado de drag-over
-    document.querySelectorAll('.drop-zone').forEach(zone => {
-        zone.classList.remove('drag-over');
-    });
-    
-    const playId = dropZone.dataset.playId;
-    if (!playId) return;
-
-    // Verificar límites de actores
-    const maxActors = parseInt(dropZone.dataset.maxActors);
-    const assignedActorsContainer = document.getElementById(`${playId}-actors`);
-    if (!assignedActorsContainer) return;
-
-    const currentActors = assignedActorsContainer.querySelectorAll('.assigned-actor').length;
-    if (currentActors >= maxActors) return;
-
-    // Obtener información del actor
-    const actorId = draggedActor.dataset.actorId;
-    const actorName = draggedActor.querySelector('.actor-name')?.textContent;
-    if (!actorName) return;
-
-    // Verificar si el actor ya está en esta obra
-    if (assignments[actorId]?.plays.has(playId)) return;
-
-    // Asignar el actor a la obra
-    assignActorToPlay(actorId, actorName, playId);
-
-    saveToLocalStorage();
-    updateStats();
-    updateActorsSummary();
-}
-
-// =====================================
-// Asignaciones
-// =====================================
-function assignActorToPlay(actorId, actorName, playId) {
-    const assignedActorsContainer = document.getElementById(`${playId}-actors`);
-    if (!assignedActorsContainer) return;
-
-    const emptyState = assignedActorsContainer.parentElement.querySelector('.empty-state');
-    
-    // Crear el elemento del actor asignado
-    const assignedActor = document.createElement('div');
-    assignedActor.className = 'assigned-actor';
-    assignedActor.draggable = true;
-    assignedActor.dataset.actorId = actorId;
-    assignedActor.innerHTML = `
-        <span>${actorName}</span>
-        <button class="remove-actor" onclick="removeActor('${actorId}', '${playId}')">×</button>
-    `;
-
-    // Agregar eventos de drag al actor asignado
-    assignedActor.addEventListener('dragstart', handleDragStart);
-    assignedActor.addEventListener('dragend', handleDragEnd);
-
-    // Agregar el actor a la obra
-    assignedActorsContainer.appendChild(assignedActor);
-    if (emptyState) emptyState.style.display = 'none';
-
-    // Actualizar estado
-    updatePlayCapacity(playId);
-    
-    // Actualizar asignaciones
+function assignActorToPlay(actorId, playId) {
     if (!assignments[actorId]) {
-        assignments[actorId] = { 
-            plays: new Set(), 
-            stats: { total: 0, duo: 0, trio: 0 }
+        assignments[actorId] = {
+            plays: new Set(),
+            stats: { total: 0, duo: 0, trio: 0 },
+            scenes: {}
         };
     }
-    assignments[actorId].plays.add(playId);
-    
-    // Actualizar estadísticas
-    const maxActors = parseInt(assignedActorsContainer.parentElement.dataset.maxActors);
-    assignments[actorId].stats.total = assignments[actorId].plays.size;
-    if (maxActors === 2) assignments[actorId].stats.duo++;
-    if (maxActors === 3) assignments[actorId].stats.trio++;
-}
 
-function removeActor(actorId, playId) {
-    // Encontrar al actor específicamente en esta obra
-    const assignedActor = document.querySelector(`.assigned-actor[data-actor-id="${actorId}"]`);
-    if (!assignedActor) return;
-
-    // Verificar que el actor pertenezca a la obra correcta
-    const playContainer = assignedActor.closest('.drop-zone');
-    if (!playContainer || playContainer.dataset.playId !== playId) return;
-
-    const maxActors = parseInt(playContainer.dataset.maxActors);
-    
-    // Actualizar estadísticas solo para esta obra
-    if (assignments[actorId]) {
-        assignments[actorId].plays.delete(playId);
-        assignments[actorId].stats.total = assignments[actorId].plays.size;
-        if (maxActors === 2) assignments[actorId].stats.duo--;
-        if (maxActors === 3) assignments[actorId].stats.trio--;
-
-        // Si el actor ya no está en ninguna obra, limpiarlo de assignments
-        if (assignments[actorId].plays.size === 0) {
-            delete assignments[actorId];
-        }
+    if (!assignments[actorId].plays.has(playId)) {
+        assignments[actorId].plays.add(playId);
+        assignments[actorId].scenes[playId] = 1;
+        createAssignedActor(actorId, playId);
+        updateActorStats(actorId);
     }
-
-    assignedActor.remove();
-    
-    const assignedActorsContainer = document.getElementById(`${playId}-actors`);
-    const emptyState = assignedActorsContainer?.parentElement.querySelector('.empty-state');
-    if (assignedActorsContainer?.children.length === 0 && emptyState) {
-        emptyState.style.display = 'block';
-    }
-
-    updatePlayCapacity(playId);
-    saveToLocalStorage();
-    updateStats();
-}
-
-function removeActorFromAllPlays(actorId) {
-    // Buscar en todas las obras por si el actor está asignado en alguna
-    const assignedActors = document.querySelectorAll(`.assigned-actor[data-actor-id="${actorId}"]`);
-    assignedActors.forEach(assignedActor => {
-        const playContainer = assignedActor.closest('.drop-zone');
-        if (!playContainer) return;
-
-        const playId = playContainer.dataset.playId;
-        assignedActor.remove();
-
-        const assignedActorsContainer = document.getElementById(`${playId}-actors`);
-        const emptyState = assignedActorsContainer?.parentElement.querySelector('.empty-state');
-        if (assignedActorsContainer?.children.length === 0 && emptyState) {
-            emptyState.style.display = 'block';
-        }
-
-        updatePlayCapacity(playId);
-    });
-
-    delete assignments[actorId];
 }
 
 function removeActorFromPlay(actorId, playId) {
-    const assignedActor = document.querySelector(`.assigned-actor[data-actor-id="${actorId}"][data-play-id="${playId}"]`);
-    if (!assignedActor) return;
-
-    const playContainer = assignedActor.closest('.drop-zone');
-    if (!playContainer) return;
-
-    const maxActors = parseInt(playContainer.dataset.maxActors);
-    
-    // Actualizar estadísticas
     if (assignments[actorId]) {
         assignments[actorId].plays.delete(playId);
-        assignments[actorId].stats.total = assignments[actorId].plays.size;
-        if (maxActors === 2) assignments[actorId].stats.duo--;
-        if (maxActors === 3) assignments[actorId].stats.trio--;
+        delete assignments[actorId].scenes[playId];
+        updateActorStats(actorId);
     }
 
-    assignedActor.remove();
-    
+    const assignedActor = document.querySelector(`#${playId}-actors [data-actor-id="${actorId}"]`);
+    if (assignedActor) {
+        assignedActor.remove();
+    }
+
+    updateCapacityBadge(playId);
+}
+
+function createAssignedActor(actorId, playId) {
+    const actor = document.querySelector(`[data-actor-id="${actorId}"]`);
+    if (!actor) return;
+
+    const assignedActor = document.createElement('div');
+    assignedActor.className = 'assigned-actor';
+    assignedActor.dataset.actorId = actorId;
+    assignedActor.innerHTML = `
+        <div class="actor-avatar">${actor.querySelector('.actor-avatar').textContent}</div>
+        <div class="actor-info">
+            <div class="actor-name">${actor.querySelector('.actor-name').textContent}</div>
+        </div>
+        <button class="remove-btn" onclick="removeActor(${actorId}, '${playId}')">×</button>
+    `;
+
     const assignedActorsContainer = document.getElementById(`${playId}-actors`);
-    const emptyState = assignedActorsContainer?.parentElement.querySelector('.empty-state');
-    if (assignedActorsContainer?.children.length === 0 && emptyState) {
-        emptyState.style.display = 'block';
-    }
+    assignedActorsContainer.appendChild(assignedActor);
+    updateCapacityBadge(playId);
+}
 
-    updatePlayCapacity(playId);
+function updateCapacityBadge(playId) {
+    const dropZone = document.querySelector(`[data-play-id="${playId}"]`);
+    if (!dropZone) return;
+
+    const currentCount = dropZone.querySelectorAll('.assigned-actor').length;
+    const maxActors = parseInt(dropZone.querySelector('.drop-zone').dataset.maxActors);
+    const badge = dropZone.querySelector('.capacity-badge');
+    
+    badge.dataset.current = currentCount;
+    badge.textContent = `${currentCount}/${maxActors} actores`;
+}
+
+function updateStats() {
+    for (const [actorId, data] of Object.entries(assignments)) {
+        updateActorStats(actorId);
+    }
+}
+
+function updateActorStats(actorId) {
+    if (!assignments[actorId]) return;
+
+    const stats = { total: 0, duo: 0, trio: 0 };
+    const plays = assignments[actorId].plays;
+
+    plays.forEach(playId => {
+        const play = document.querySelector(`[data-play-id="${playId}"]`);
+        if (play) {
+            const maxActors = parseInt(play.querySelector('.drop-zone').dataset.maxActors);
+            stats.total++;
+            if (maxActors === 2) stats.duo++;
+            else if (maxActors === 3) stats.trio++;
+        }
+    });
+
+    assignments[actorId].stats = stats;
+}
+
+function initializeDefaultData() {
+    // Resetear contadores basados en los datos importados
+    actorCounter = defaultActors.length;
+    playCounter = defaultPlays.length;
+
+    // Inicializar actores
+    defaultActors.forEach(actor => {
+        const initials = actor.name[0].toUpperCase();
+        const actorCard = document.createElement('div');
+        actorCard.className = 'actor-card';
+        actorCard.draggable = true;
+        actorCard.dataset.actorId = actor.id;
+        actorCard.innerHTML = `
+            <div class="actor-avatar">${initials}</div>
+            <div class="actor-info">
+                <div class="actor-name">${actor.name}</div>
+                <div class="actor-role">${actor.role}</div>
+            </div>
+            <button class="delete-btn" onclick="deleteActor(${actor.id})">×</button>
+        `;
+        document.getElementById('actorsList').appendChild(actorCard);
+        actorCard.addEventListener('dragstart', handleDragStart);
+        actorCard.addEventListener('dragend', handleDragEnd);
+    });
+
+    // Inicializar obras
+    defaultPlays.forEach(play => {
+        const playCard = document.createElement('div');
+        playCard.className = 'play-card';
+        playCard.dataset.playId = play.id;
+        playCard.innerHTML = `
+            <div class="play-header">
+                <div class="play-title-row">
+                    <h3 class="play-title">${play.title}</h3>
+                    <button class="delete-btn" onclick="deletePlay('${play.id}')">×</button>
+                </div>
+                <div class="play-info">
+                    <span>${play.info}</span>
+                    <span class="capacity-badge" data-current="0" data-max="${play.maxActors}">0/${play.maxActors} actores</span>
+                </div>
+            </div>
+            <div class="drop-zone" data-play-id="${play.id}" data-max-actors="${play.maxActors}">
+                <div class="assigned-actors" id="${play.id}-actors"></div>
+                <div class="empty-state">Arrastra actores aquí</div>
+            </div>
+        `;
+        document.getElementById('playsGrid').appendChild(playCard);
+        const dropZone = playCard.querySelector('.drop-zone');
+        dropZone.addEventListener('dragover', handleDragOver);
+        dropZone.addEventListener('dragenter', handleDragEnter);
+        dropZone.addEventListener('dragleave', handleDragLeave);
+        dropZone.addEventListener('drop', handleDrop);
+    });
+
+    // Guardar estado inicial
+    saveToLocalStorage();
 }
 
 // =====================================
@@ -416,228 +674,13 @@ function updateStats() {
     document.getElementById('assignedCount').textContent = assignedActors;
 }
 
-// =====================================
-// Agregar dinámicamente
-// =====================================
-function addActor() {
-    actorCounter++;
-    const actorsList = document.getElementById('actorsList');
 
-    const actorName = prompt('Nombre del actor:');
-    if (!actorName) return;
-    const actorRole = prompt('Rol del actor:') || 'Reparto';
 
-    const initials = actorName.split(' ').map(n => n[0]).join('').toUpperCase();
 
-    const actorCard = document.createElement('div');
-    actorCard.className = 'actor-card';
-    actorCard.draggable = true;
-    actorCard.dataset.actorId = actorCounter;
-    actorCard.innerHTML = `
-        <div class="actor-avatar">${initials}</div>
-        <div class="actor-info">
-            <div class="actor-name">${actorName}</div>
-            <div class="actor-role">${actorRole}</div>
-        </div>
-        <button class="delete-btn" onclick="deleteActor(${actorCounter})">×</button>
-    `;
-
-    actorsList.appendChild(actorCard);
-    actorCard.addEventListener('dragstart', handleDragStart);
-    actorCard.addEventListener('dragend', handleDragEnd);
-    saveToLocalStorage();
-    updateStats();
-}
-
-function addPlay() {
-    playCounter++;
-    const playsGrid = document.getElementById('playsGrid');
-
-    const playName = prompt('Nombre de la obra:');
-    if (!playName) return;
-    const maxActors = parseInt(prompt('Cantidad máxima de actores:', '3')) || 3;
-
-    // Crear un ID único usando el nombre de la obra y el contador
-    const playId = `play_${playName.toLowerCase().replace(/\s+/g, '_')}_${playCounter}`;
-
-    const playCard = document.createElement('div');
-    playCard.className = 'play-card';
-    playCard.dataset.playId = playId;
-    playCard.innerHTML = `
-        <div class="play-header">
-            <div class="play-title-row">
-                <h3 class="play-title">${playName}</h3>
-                <button class="delete-btn" onclick="deletePlay('${playId}')">×</button>
-            </div>
-            <div class="play-info">
-                <span>Escena 1</span>
-                <span class="capacity-badge" data-current="0" data-max="${maxActors}">0/${maxActors} actores</span>
-            </div>
-        </div>
-        <div class="drop-zone" data-play-id="${playId}" data-max-actors="${maxActors}">
-            <div class="assigned-actors" id="${playId}-actors"></div>
-            <div class="empty-state">Arrastra actores aquí</div>
-        </div>
-    `;
-
-    playsGrid.appendChild(playCard);
-
-    // Configurar eventos de la zona de drop
-    const dropZone = playCard.querySelector('.drop-zone');
-    if (dropZone) {
-        dropZone.addEventListener('dragover', handleDragOver);
-        dropZone.addEventListener('dragenter', handleDragEnter);
-        dropZone.addEventListener('dragleave', handleDragLeave);
-        dropZone.addEventListener('drop', handleDrop);
-    }
-
-    saveToLocalStorage();
-}
 
 // =====================================
 // Persistencia
 // =====================================
-function saveToLocalStorage() {
-    const actorCards = document.querySelectorAll('.actor-card');
-    const actorsData = Array.from(actorCards).map(actor => ({
-        id: actor.dataset.actorId,
-        name: actor.querySelector('.actor-name').textContent,
-        role: actor.querySelector('.actor-role').textContent,
-        visible: actor.style.display !== 'none',
-        assignments: assignments[actor.dataset.actorId] || { plays: [], stats: { total: 0, duo: 0, trio: 0 }, scenes: {} }
-    }));
-
-    const plays = document.querySelectorAll('.play-card');
-    const playsData = Array.from(plays).map(play => {
-        const dropZone = play.querySelector('.drop-zone');
-        const assignedActors = Array.from(dropZone.querySelectorAll('.assigned-actor')).map(a => a.dataset.actorId);
-        return {
-            playId: dropZone.dataset.playId,
-            title: play.querySelector('.play-title').textContent,
-            max: dropZone.dataset.maxActors,
-            assignedActors
-        };
-    });
-
-    localStorage.setItem('actorsData', JSON.stringify(actorsData));
-    localStorage.setItem('playsData', JSON.stringify(playsData));
-}
-
-function loadFromLocalStorage() {
-    const actorsData = JSON.parse(localStorage.getItem('actorsData') || '[]');
-    const playsData = JSON.parse(localStorage.getItem('playsData') || '[]');
-
-    // Limpiar contenedores y estado
-    document.getElementById('actorsList').innerHTML = '';
-    document.getElementById('playsGrid').innerHTML = '';
-    assignments = {};
-
-    // Cargar actores y sus asignaciones
-    actorsData.forEach(actor => {
-        let actorCard = document.createElement('div');
-        actorCard.className = 'actor-card';
-        actorCard.draggable = true;
-        actorCard.dataset.actorId = actor.id;
-        const initials = actor.name.split(' ').map(n => n[0]).join('').toUpperCase();
-        actorCard.innerHTML = `
-            <div class="actor-avatar">${initials}</div>
-            <div class="actor-info">
-                <div class="actor-name">${actor.name}</div>
-                <div class="actor-role">${actor.role}</div>
-            </div>
-            <button class="delete-btn" onclick="deleteActor(${actor.id})">×</button>
-        `;
-        document.getElementById('actorsList').appendChild(actorCard);
-        actorCard.style.display = actor.visible ? 'flex' : 'none';
-        actorCounter = Math.max(actorCounter, parseInt(actor.id));
-
-        // Restaurar asignaciones
-        if (actor.assignments) {
-            assignments[actor.id] = {
-                plays: new Set(actor.assignments.plays),
-                stats: actor.assignments.stats,
-                scenes: actor.assignments.scenes || {}
-            };
-        }
-    });
-
-    // Cargar obras
-    playsData.forEach(play => {
-        const playsGrid = document.getElementById('playsGrid');
-        const playCard = document.createElement('div');
-        playCard.className = 'play-card';
-        playCard.dataset.playId = play.playId;
-        playCard.innerHTML = `
-            <div class="play-header">
-                <div class="play-title-row">
-                    <h3 class="play-title">${play.title}</h3>
-                    <button class="delete-btn" onclick="deletePlay('${play.playId}')">×</button>
-                </div>
-                <div class="play-info">
-                    <span>Escena 1</span>
-                    <span class="capacity-badge" data-current="0" data-max="${play.max}">0/${play.max} actores</span>
-                </div>
-            </div>
-            <div class="drop-zone" data-play-id="${play.playId}" data-max-actors="${play.max}">
-                <div class="assigned-actors" id="${play.playId}-actors"></div>
-                <div class="empty-state">Arrastra actores aquí</div>
-            </div>
-        `;
-        playsGrid.appendChild(playCard);
-
-        // Restaurar asignaciones de actores
-        play.assignedActors.forEach(actorId => {
-            const actorName = document.querySelector(`.actor-card[data-actor-id="${actorId}"] .actor-name`)?.textContent;
-            if (actorName) {
-                assignActorToPlay(actorId, actorName, play.playId);
-            }
-        });
-
-        playCounter = Math.max(playCounter, parseInt(play.playId.replace(/\D/g, '')));
-    });
-
-    // Reinicializar eventos después de cargar todo
-    initializeDragAndDrop();
-    
-    // Actualizar la vista de resumen si está activa
-    if (document.querySelector('.nav-tab[data-section="summary"]').classList.contains('active')) {
-        updateActorsSummary();
-    }
-}
-
-function deleteActor(actorId) {
-    const actor = document.querySelector(`.actor-card[data-actor-id="${actorId}"]`);
-    if (!actor) return;
-
-    const actorName = actor.querySelector('.actor-name').textContent;
-    if (confirm(`¿Seguro que querés eliminar a ${actorName}?`)) {
-        removeActorFromAllPlays(actorId);
-        actor.remove();
-        updateStats();
-        saveToLocalStorage();
-    }
-}
-
-function deletePlay(playId) {
-    const play = document.querySelector(`.play-card[data-play-id="${playId}"]`);
-    if (!play) return;
-
-    const playName = play.querySelector('.play-title').textContent;
-    if (confirm(`¿Seguro que querés eliminar la obra "${playName}"?`)) {
-        // Restaurar actores asignados a esta obra
-        const assignedActors = play.querySelectorAll('.assigned-actor');
-        assignedActors.forEach(assigned => {
-            const actorId = assigned.dataset.actorId;
-            const originalActor = document.querySelector(`.actor-card[data-actor-id="${actorId}"]`);
-            if (originalActor) originalActor.style.display = 'flex';
-            delete assignments[actorId];
-        });
-
-        play.remove();
-        updateStats();
-        saveToLocalStorage();
-    }
-}
 
 // =====================================
 // Estadísticas y Resumen

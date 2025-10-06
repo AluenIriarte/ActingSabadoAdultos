@@ -252,6 +252,15 @@ body::before{
 }
 .card-header h2{margin:0;font-family:'Playfair Display',serif;font-size:18px;color:var(--text)}
 
+/* Section headers + descriptions to make each panel self-explanatory */
+.section-header{display:flex;flex-direction:column}
+.section-header h2{margin:0;font-size:18px}
+.section-desc{margin-top:6px;color:var(--muted);font-size:13px}
+
+/* Clase result header */
+.clase-result-header{display:flex;flex-direction:column;background:transparent;padding:6px 0;margin-bottom:8px}
+.clase-result-header h3{margin:0;font-size:16px;font-weight:700}
+
 /* Actors grid: 3-4 columns desktop, responsive */
 .actors-list{
   display:grid;

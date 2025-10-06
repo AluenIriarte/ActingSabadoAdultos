@@ -345,13 +345,16 @@ document.addEventListener('DOMContentLoaded', () => {
         return { sel, used };
       })();
 
-      // Missing actors after greedy — ensure NO actor is left out: always build adhoc partitions if needed
+      // Missing actors after greedy — create new scenes ONLY if the user allowed it
       const usedSet = greedyRes.used || new Set();
       const missing = target.filter(a => !usedSet.has(a));
 
-      // Build adhoc partitions to cover any missing actors (guaranteed fallback)
+      const allowAdhocEl = document.getElementById('allowAdhoc');
+      const allowAdhoc = allowAdhocEl ? !!allowAdhocEl.checked : false;
+
+      // Build adhoc partitions only when allowed by the user
       const adhocScenes = [];
-      if(missing.length){
+      if(missing.length && allowAdhoc){
         const makePartitions = (arr)=>{
           const s = arr.slice(); const groups = [];
           while(s.length){
@@ -372,11 +375,20 @@ document.addEventListener('DOMContentLoaded', () => {
       const finalSel = (greedyRes.sel || []).concat(adhocScenes);
       const resultScenes = (lockedScenes && lockedScenes.length) ? lockedScenes.concat(finalSel) : finalSel;
       lastRenderedScenes = resultScenes.slice();
-      // If we created adhoc scenes, show a small informative note so user sees it happened
+      // Notification: prefer singular/plural Spanish phrasing and avoid the term "ad-hoc"
       let noteHTML = '';
       if(adhocScenes.length){
-        noteHTML = `<div class="clase-note" style="margin-bottom:8px;padding:8px 10px;border-radius:8px;background:linear-gradient(90deg, rgba(255,215,0,0.06), rgba(255,215,0,0.02));border:1px solid rgba(255,215,0,0.14);color:var(--text);font-weight:600">Se generaron ${adhocScenes.length} escena(s) ad-hoc para cubrir ${missing.length} actor(es).</div>`;
+        const c = adhocScenes.length;
+        if(c===1){
+          noteHTML = `<div class="clase-note" style="margin-bottom:8px;padding:8px 10px;border-radius:8px;background:linear-gradient(90deg, rgba(255,215,0,0.06), rgba(255,215,0,0.02));border:1px solid rgba(255,215,0,0.14);color:var(--text);font-weight:600">Se ha generado 1 escena nueva para cubrir ${missing.length} actor(es).</div>`;
+        } else {
+          noteHTML = `<div class="clase-note" style="margin-bottom:8px;padding:8px 10px;border-radius:8px;background:linear-gradient(90deg, rgba(255,215,0,0.06), rgba(255,215,0,0.02));border:1px solid rgba(255,215,0,0.14);color:var(--text);font-weight:600">Se han generado ${c} escenas nuevas para cubrir ${missing.length} actor(es).</div>`;
+        }
+      } else if(missing.length && !allowAdhoc){
+        // Inform user that some actors couldn't be covered and adhoc is disabled
+        noteHTML = `<div class="clase-empty">No se pudieron cubrir ${missing.length} actor(es) con las obras existentes. Activa "Permitir escenas nuevas" para crear escenas nuevas.</div>`;
       }
+
       claseResult.innerHTML = noteHTML + renderCoverToHTML(resultScenes);
       attachSceneHandlers();
       updateClaseStats(resultScenes.length);

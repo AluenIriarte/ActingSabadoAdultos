@@ -349,9 +349,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const usedSet = greedyRes.used || new Set();
       const missing = target.filter(a => !usedSet.has(a));
 
-      // If missing, build adhoc partitions preferring 5/4 when odd
+      // If missing, optionally build adhoc partitions preferring 5/4 when odd — only when allowAdhoc is checked
       const adhocScenes = [];
-      if(missing.length){
+      const allowAdhocEl = document.getElementById('allowAdhoc');
+      const allowAdhoc = allowAdhocEl ? !!allowAdhocEl.checked : false;
+      if(missing.length && allowAdhoc){
         const makePartitions = (arr)=>{
           const s = arr.slice(); const groups = [];
           while(s.length){
@@ -367,6 +369,11 @@ document.addEventListener('DOMContentLoaded', () => {
         parts.forEach((grp, idx)=>{
           adhocScenes.push({ id: 'adhoc-'+Date.now()+'-'+idx, title: `Escena ${idx+1}`, actores: grp.slice(), roles: grp.map(a=>({name:a})), genre: 'drama' });
         });
+      }
+
+      if(missing.length && !allowAdhoc){
+        // Inform user that some actors couldn't be covered and adhoc is disabled
+        claseResult.innerHTML += `<div class="clase-empty">No se pudieron cubrir ${missing.length} actor(es) con las obras existentes. Activa "Permitir escenas nuevas" para generar escenas ad-hoc.</div>`;
       }
 
       const finalSel = (greedyRes.sel || []).concat(adhocScenes);

@@ -20,118 +20,330 @@ body{
   font-family: 'Poppins', system-ui, Arial;
   margin:0; background:var(--bg); color:#0f172a; -webkit-font-smoothing:antialiased;
 }
-.hero{background:linear-gradient(135deg, rgba(99,102,241,0.08), rgba(99,102,241,0.03));padding:28px 0}
-.hero-inner{max-width:1200px;margin:0 auto;padding:0 20px}
-.hero h2{font-family:'Playfair Display',serif;margin:0;font-size:22px;color:#111827}
-.hero-lead{margin-top:8px;color:var(--muted)}
+.hero{background:linear-gradient(180deg,#0f172a, #0b1220);padding:44px 0;color:#fff}
+.hero-inner{max-width:1200px;margin:0 auto;padding:0 20px;text-align:center}
+.hero.cinematic h2{font-family:'Playfair Display',serif;margin:0;font-size:36px;color:#fff;letter-spacing:0.6px}
+.hero-lead{margin-top:12px;color:rgba(255,255,255,0.8);font-size:15px}
+.hero-cta{margin-top:14px;background:linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));display:inline-block;padding:10px 14px;border-radius:999px;color:rgba(255,255,255,0.9);font-weight:600}
 .app-header{display:flex;align-items:center;justify-content:space-between;padding:14px 32px;border-bottom:1px solid rgba(226,232,240,0.6);background:linear-gradient(90deg, rgba(99,102,241,0.03), rgba(99,102,241,0.0));}
 .brand h1{font-family:'Playfair Display', serif;margin:0;font-size:22px;color:#111827}
-.subtitle{margin:2px 0 0;color:var(--muted);font-size:13px}
-.tabs{display:flex;gap:12px}
-.tab{background:#f3f4f6;border-radius:999px;padding:8px 14px;border:0;color:#374151;cursor:pointer;font-weight:600}
-.tab.active{background:linear-gradient(90deg,var(--accent),#4f46e5);color:#fff;box-shadow:0 6px 18px rgba(99,102,241,0.12)}
+/*
+  style.css
+  Redesigned for "Actores" section — Cinematic + Modern UI
+  - Variables for light/dark themes
+  - Actor cards: grid, animations, hover interactions
+  - Tooltip for plays
+  - Responsive: 1 column mobile, 3-4 columns desktop
+  - Keeps compatible with existing HTML structure in index.html
+*/
+
+:root{
+  /* Color tokens (dark theatrical) */
+  --bg: linear-gradient(180deg,#071018,#0b1220); /* deep theatrical gradient */
+  --panel: rgba(255,255,255,0.02);
+  --muted:#c2c8d1;
+  --text: #f6f7fb; /* pale text */
+  --accent: #8f2d3f; /* deep burgundy */
+  --gold: #ffd873; /* warm gold for 3-actor */
+  --sky: #6fd3ff; /* light sky blue for 2-actor */
+  --solo-bg: rgba(143,45,63,0.08);
+  --two-bg: rgba(111,211,255,0.06);
+  --three-bg: rgba(255,216,115,0.06);
+  --glass: rgba(255,255,255,0.03);
+  --card-radius: 14px;
+  --gap: 18px;
+  --shadow-1: 0 10px 30px rgba(3,6,12,0.6);
+  --shadow-2: 0 18px 44px rgba(3,6,12,0.55);
+}
+
+/* Light theme variables (optional) */
+:root.light{
+  --bg: linear-gradient(180deg,#f7f8fb,#eef2f8);
+  --panel: #ffffff;
+  --muted:#6b7280;
+  --text:#0b1220;
+  --accent:#6b2b3a;
+  --gold:#FFD54F;
+  --sky:#4FC3F7;
+  --glass: rgba(11,18,32,0.03);
+  --shadow-1: 0 8px 28px rgba(11,18,32,0.06);
+  --shadow-2: 0 14px 44px rgba(11,18,32,0.06);
+}
+
+/* Global base */
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  margin:0; background:var(--bg); color:var(--text); -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* subtle textured background using radial gradient for theatrical depth */
+body::before{
+  content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image: radial-gradient(circle at 10% 10%, rgba(255,210,120,0.03), transparent 8%), radial-gradient(circle at 90% 90%, rgba(79,195,247,0.02), transparent 12%);
+}
+
+/* App header / hero adjustments (keeps existing structure) */
+.app-header{background:transparent;border-bottom:1px solid rgba(255,255,255,0.04);padding:18px 28px;display:flex;align-items:center;justify-content:space-between}
+.brand h1{font-family:'Playfair Display',serif;margin:0;font-size:20px;color:var(--text)}
+.subtitle{color:var(--muted);font-size:13px;margin-top:4px}
 
 .container{max-width:1200px;margin:28px auto;padding:0 20px}
-.grid{display:grid;grid-template-columns:360px 1fr;gap:24px}
-.card{background:#fff;border-radius:var(--card-radius);box-shadow:0 2px 8px rgba(0,0,0,0.05);padding:18px}
-.card{background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(250,250,255,0.95));}
-.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-.card-header h2{margin:0;font-family:'Playfair Display',serif;font-size:18px}
-.search-wrap input[type=search]{padding:10px 12px;border-radius:10px;border:1px solid #e5e7eb;background:var(--bg)}
 
-.actors-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;max-height:66vh;overflow:auto;padding-right:6px}
-.actor-card{display:flex;flex-direction:column;border-radius:12px;padding:16px;border:1px solid #f3f4f6;min-height:140px}
-.actor-top{display:flex;align-items:center;justify-content:space-between}
-.actor-name{font-weight:600}
-.actor-stats{display:flex;gap:10px;margin-top:8px;align-items:center}
-.stat{background:#f8fafc;padding:8px 10px;border-radius:999px;font-size:13px;color:var(--muted)}
-.count-badge{padding:6px 8px;border-radius:999px;font-weight:700;font-size:12px}
-.count-badge.two{background:var(--two-bg);color:var(--two-text)}
-.count-badge.three{background:var(--three-bg);color:var(--three-text)}
-.play-list{display:flex;flex-direction:column;gap:6px}
-.play-chip{background:#f3f4f6;padding:6px 8px;border-radius:8px;font-size:13px}
-.play-chip.chip-two{background:linear-gradient(90deg,var(--two-bg), rgba(224,242,254,0.6));color:var(--two-text);font-weight:600}
-.play-chip.chip-three{background:linear-gradient(90deg,var(--three-bg), rgba(254,243,199,0.6));color:var(--three-text);font-weight:600}
+/* ---- Clase de Hoy redesign ---- */
+.clase-shell{background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));padding:18px;border-radius:14px;box-shadow:var(--shadow-2);border:1px solid rgba(255,255,255,0.03);max-width:1100px;margin:0 auto}
+.clase-header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:rgba(255,255,255,0.02);backdrop-filter: blur(6px);border-radius:10px}
+.clase-title h1{margin:0;font-family:'Playfair Display',serif;font-size:22px}
+.clase-sub{margin:4px 0 0;color:var(--muted);font-size:13px}
+.timer-panel{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.timer-display{font-family:monospace;font-size:20px;padding:6px 10px;border-radius:8px;background:rgba(0,0,0,0.18);color:var(--text);min-width:120px;text-align:center}
+.timer-toggle{width:44px;height:44px;border-radius:999px;border:none;background:linear-gradient(90deg, rgba(255,216,115,0.12), rgba(143,45,63,0.04));display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.timer-toggle .dot{width:10px;height:10px;border-radius:50%;background:#fff;box-shadow:0 0 8px rgba(255,255,255,0.1)}
+.timer-duration{font-size:12px;color:var(--muted)}
 
-.plays-subgrid{display:grid;gap:12px; /* show cards vertically, two per row */
-  grid-template-columns: repeat(2, minmax(220px, 1fr));
-  grid-auto-rows:1fr;
-}
+.clase-body{display:flex;gap:18px;margin-top:14px}
+.clase-left{flex:1 1 100%}
 
-@media (max-width:700px){
-  .plays-subgrid{grid-template-columns:1fr}
-}
-.plays-subgrid::-webkit-scrollbar{height:8px;width:8px}
-.plays-subgrid::-webkit-scrollbar-thumb{background:linear-gradient(180deg, rgba(99,102,241,0.12), rgba(99,102,241,0.06));border-radius:8px}
+/* If the right column is empty, hide it so the left column can center */
+/* clase-right removed — layout simplified to single-column left */
 
-/* Attendance / Clase UI */
-.attendance-item{display:flex;align-items:center;justify-content:space-between;padding:10px;border-radius:12px;border:1px solid rgba(226,232,240,0.6);background:linear-gradient(180deg, #fff,#fbfbff);}
-.att-left{display:flex;align-items:center;gap:10px}
-.avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff}
-.avatar.initials{background:linear-gradient(135deg, rgba(99,102,241,0.9), rgba(99,102,241,0.6));}
-.toggle-input{width:18px;height:18px}
+.attendance-card{background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));padding:14px;border-radius:12px;width:100%}
+.attendance-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.attendance-actions{display:flex;gap:8px;align-items:center}
+.switch{position:relative;display:inline-block;width:44px;height:24px}
+.switch input{display:none}
+.switch .slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,0.04);border-radius:24px}
+.switch .slider:before{content:'';position:absolute;height:18px;width:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform 180ms ease}
+.switch input:checked + .slider{background:linear-gradient(90deg, rgba(255,216,115,0.12), rgba(143,45,63,0.04))}
+.switch input:checked + .slider:before{transform:translateX(20px)}
 
-.clase-result{margin-top:18px;padding:14px;border-radius:12px;border:1px solid rgba(226,232,240,0.6);background:linear-gradient(180deg,#fff,#fbfbff)}
-.clase-scene{padding:12px;border-radius:12px;background:linear-gradient(90deg, rgba(255,255,255,0.8), rgba(249,250,255,0.8));margin-bottom:10px;border:1px solid rgba(226,232,240,0.6);display:flex;justify-content:space-between;align-items:center}
-.clase-scene .left{max-width:72%}
-.clase-scene .title{font-weight:700;margin-bottom:6px}
+.attendance-list{display:flex;flex-direction:row;align-items:center;gap:10px;overflow-x:auto;padding:8px;white-space:nowrap}
+.attendance-item{min-width:120px;flex:0 0 auto;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));padding:10px;border-radius:12px;display:inline-flex;flex-direction:column;align-items:center;gap:8px;border:1px solid rgba(255,255,255,0.02);transition:transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease}
+.attendance-item.selected{box-shadow:0 18px 44px rgba(255,200,60,0.18);transform:translateY(-6px);border-color:rgba(255,200,60,0.36);background:linear-gradient(90deg, rgba(255,200,60,0.06), rgba(255,216,115,0.03))}
+.attendance-item .initials{width:44px;height:44px;border-radius:8px;background:linear-gradient(90deg, rgba(255,200,60,0.22), rgba(255,216,115,0.08));display:flex;align-items:center;justify-content:center;font-weight:700;color:#2b1f00}
+.attendance-item .name{font-size:13px;color:var(--text);text-align:center}
+.attendance-item .meta{font-size:12px;color:var(--muted)}
+.attendance-item:hover{transform:translateY(-4px)}
+
+.clase-stats{padding:8px 10px;background:rgba(255,255,255,0.01);border-radius:8px;color:var(--muted);margin-bottom:10px}
+
+.clase-result{min-height:120px;padding:12px;border-radius:10px;background:rgba(6,10,14,0.65);border:1px solid rgba(255,255,255,0.02);overflow:auto;width:100%;box-sizing:border-box}
+
+/* When clase-result follows the clase-body, make it span the full shell width */
+.clase-shell > .clase-result{margin-left:0;margin-right:0}
+.clase-scene{padding:12px;border-radius:10px;background:rgba(14,18,22,0.55);margin-bottom:12px;animation:sceneIn 280ms ease;border-left:4px solid rgba(255,255,255,0.02)}
+.clase-scene .title{font-weight:700}
 .clase-scene .meta{color:var(--muted);font-size:13px}
-.clase-scene .actions{display:flex;gap:8px}
-.small-action{padding:8px 10px;border-radius:10px;border:0;cursor:pointer;background:linear-gradient(90deg,var(--accent),#4f46e5);color:#fff}
+.clase-scene.locked{border:1px solid rgba(255,200,60,0.36);box-shadow:0 18px 40px rgba(255,200,60,0.08);background:linear-gradient(90deg, rgba(255,216,115,0.03), rgba(255,216,115,0.01))}
+.clase-scene{cursor:pointer}
 
-/* Header polish */
-.brand .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#4f46e5);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:700;margin-right:12px}
-.brand-wrap{display:flex;align-items:center;gap:12px}
+@keyframes sceneIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
-/* Games color accents */
-.game-card{border-left:6px solid rgba(99,102,241,0.12)}
-.game-output{min-height:56px}
+.btn-row{display:flex;gap:12px;justify-content:center;margin-top:12px}
+.btn-row .btn{padding:10px 14px;border-radius:12px;box-shadow:0 8px 20px rgba(2,6,23,0.4);transition:transform 160ms ease, box-shadow 160ms ease}
+.btn-row .btn:hover{transform:translateY(-4px)}
 
-.plays-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;align-items:start}
-.play-card{padding:12px;border-radius:12px;border:1px solid #f3f4f6;position:relative}
-.play-card.two{background:linear-gradient(135deg,var(--two-bg), rgba(224,242,254,0.6));border-left:6px solid rgba(3,105,161,0.18)}
-.play-card.three{background:linear-gradient(135deg,var(--three-bg), rgba(254,243,199,0.6));border-left:6px solid rgba(146,64,14,0.18)}
-.play-count-pill{position:absolute;top:12px;right:12px;padding:6px 10px;border-radius:999px;font-weight:700}
-.play-count-pill.two{background:var(--two-bg);color:var(--two-text)}
-.play-count-pill.three{background:var(--three-bg);color:var(--three-text)}
-.play-title{font-weight:600;margin-bottom:6px}
-.badge{display:inline-block;padding:6px 8px;border-radius:999px;font-weight:600;font-size:12px}
-.badge.comedy{background:var(--comedy-bg);color:var(--comedy-text)}
-.badge.drama{background:var(--drama-bg);color:var(--drama-text)}
-.actor-list{margin-top:8px;font-size:14px;color:#374151}
-
-.clase-card{padding:20px}
-.attendance-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
-.attendance-item{display:flex;align-items:center;justify-content:space-between;padding:8px;border-radius:10px;border:1px solid #f3f4f6}
-.card .card-header h3{margin:0;font-family:'Playfair Display',serif;font-size:16px}
-.card .card-body pre{background:transparent;border:0;padding:0;margin:0}
-.game-meta{color:var(--muted);font-size:13px;margin-top:6px}
-.game-actions{display:flex;gap:8px;margin-top:10px}
-.small-btn{padding:6px 8px;border-radius:8px;border:0;cursor:pointer}
-.small-btn.ghost{background:#f3f4f6}
-.save-indicator{font-size:12px;color:var(--muted);margin-left:8px}
-.actions{margin-top:16px;display:flex;gap:12px}
-.btn{padding:10px 14px;border-radius:12px;border:0;cursor:pointer;font-weight:600}
-.btn.primary{background:linear-gradient(90deg,var(--accent),#4f46e5);color:#fff}
-.btn.secondary{background:linear-gradient(90deg,#f59e0b,#f97316);color:#fff}
-
-.clase-result{margin-top:18px;padding:12px;border-radius:12px;border:1px dashed #e5e7eb;background:#fbfbfd}
-.result-item{display:flex;align-items:center;justify-content:space-between;padding:10px;border-radius:10px;margin-bottom:8px;background:linear-gradient(90deg, rgba(249,250,255,0.6), rgba(255,255,255,0.2))}
-.result-title{font-weight:700}
-
-.stats{display:flex;gap:12px;align-items:center}
-.stat-pill{background:#f8fafc;padding:8px 10px;border-radius:999px;font-weight:600}
-
-.app-footer{padding:12px 32px;border-top:1px solid rgba(226,232,240,0.6);text-align:center;color:var(--muted);font-size:13px}
-
-/* Games UI styles */
-.game-card{display:flex;flex-direction:column;border-radius:14px;padding:16px;background:linear-gradient(180deg, #ffffff, #fbfbff);box-shadow:0 6px 20px rgba(99,102,241,0.06);margin-bottom:12px}
-.game-card .card-header{padding:0;margin-bottom:8px}
-.game-card .card-body{padding:8px;background:transparent}
-.card .card-header h3{font-size:16px}
-.card .card-body .game-output{background:linear-gradient(90deg, rgba(239,246,255,0.6), rgba(255,255,255,0.6));padding:12px;border-radius:10px}
-
-@media (max-width:900px){
-  .grid{grid-template-columns:1fr;}
-  .actors-card{order:2}
+/* responsive */
+@media(max-width:900px){
+  .clase-body{flex-direction:column}
+  .clase-left{flex:0 0 auto}
+  .attendance-list{flex-wrap:wrap}
+  .attendance-item{min-width:48%;}
 }
+
+/* Hero cinematic */
+.hero{padding:36px 0 6px}
+.hero-inner.cinematic{max-width:1100px;margin:0 auto;padding:36px;border-radius:18px;background:linear-gradient(180deg, rgba(183,110,121,0.06), rgba(11,18,32,0.02));box-shadow:0 20px 50px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.03);display:flex;flex-direction:column;gap:8px}
+.hero-inner h2{font-size:28px;margin:0;font-family:'Playfair Display',serif}
+.hero-lead{color:var(--muted);font-size:15px}
+.hero-cta{margin-top:6px;padding:10px 14px;border-radius:12px;background:linear-gradient(90deg, rgba(255,213,79,0.06), rgba(79,195,247,0.03));color:var(--text);display:inline-block;font-weight:600}
+
+/* Buttons */
+.btn{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 12px;border-radius:10px;color:var(--text);cursor:pointer}
+.btn.primary{background:linear-gradient(90deg, rgba(183,110,121,0.18), rgba(79,195,247,0.06));border:none}
+.btn.small, .small-btn{padding:6px 8px;border-radius:8px;font-size:13px}
+.btn.ghost{background:transparent;border:1px dashed rgba(255,255,255,0.04)}
+
+/* Plays list and cards (impact visuals) */
+.plays-list{display:flex;flex-direction:column;gap:16px}
+.plays-subgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.play-card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:14px;border-radius:12px;box-shadow:0 10px 30px rgba(2,6,23,0.45);display:flex;align-items:flex-start;justify-content:space-between;border:1px solid rgba(255,255,255,0.02)}
+.play-card .left{max-width:75%}
+.play-title{font-weight:700;font-size:16px}
+.badge{padding:6px 8px;border-radius:8px;font-size:13px}
+.badge.comedy{background:linear-gradient(90deg, rgba(79,195,247,0.08), rgba(79,195,247,0.03));color:var(--sky)}
+.badge.drama{background:linear-gradient(90deg, rgba(255,213,79,0.08), rgba(255,213,79,0.03));color:var(--gold)}
+.actor-list{color:var(--muted);margin-top:8px}
+
+/* play chips variants for actors list */
+.play-chip.chip-one{background:var(--solo-bg);border-color:rgba(143,45,63,0.18);color:var(--accent);}
+.play-chip.chip-two{background:var(--two-bg);border-color:rgba(111,211,255,0.18);color:#054a66}
+.play-chip.chip-three{background:var(--three-bg);border-color:rgba(255,216,115,0.18);color:#6b4a00}
+
+/* Solo play badge (detail modal and plays view) */
+.play-meta-solo{display:inline-block;padding:6px 8px;border-radius:999px;background:rgba(183,110,121,0.12);color:var(--accent);font-weight:700;margin-left:8px}
+
+/* Play-card color variants to match actor chips */
+.play-card.one{border-left:6px solid rgba(143,45,63,0.18);background:linear-gradient(180deg, rgba(143,45,63,0.02), rgba(255,255,255,0.005));}
+.play-card.two{border-left:6px solid rgba(111,211,255,0.12);background:linear-gradient(180deg, rgba(111,211,255,0.02), rgba(255,255,255,0.005));}
+.play-card.three{border-left:6px solid rgba(255,216,115,0.12);background:linear-gradient(180deg, rgba(255,216,115,0.02), rgba(255,255,255,0.005));}
+
+/* Count badges for actors */
+.count-badge.one{background:linear-gradient(90deg, rgba(143,45,63,0.14), rgba(143,45,63,0.06));color:var(--accent)}
+.count-badge.two{background:linear-gradient(90deg, rgba(111,211,255,0.14), rgba(111,211,255,0.06));color:#0369A1}
+.count-badge.three{background:linear-gradient(90deg, rgba(255,216,115,0.14), rgba(255,216,115,0.06));color:#7c4b00}
+
+/* Tabs */
+.tabs{display:flex;gap:8px}
+.tab{background:transparent;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);color:var(--muted);cursor:pointer}
+.tab.active{background:linear-gradient(90deg, rgba(255,216,115,0.06), rgba(143,45,63,0.03));color:var(--text);font-weight:700}
+
+/* Attendance and timer (consolidated) */
+.attendance{display:flex;gap:18px;align-items:flex-start}
+/* horizontal scrollable attendance list (desktop) — wraps on small screens */
+/* Two-row grid for attendance: shows up to two rows; scroll vertically if overflow in height */
+.attendance-list{display:grid;grid-template-columns:repeat(5,minmax(120px,1fr));grid-auto-rows:min-content;gap:12px;padding:8px;align-items:start;justify-items:stretch}
+.attendance-item{width:100%;max-width:180px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));padding:10px;border-radius:10px;display:flex;flex-direction:column;align-items:center;gap:6px;border:1px solid rgba(255,255,255,0.02);transition:transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease}
+.attendance-item .initials{width:36px;height:36px;border-radius:8px;background:linear-gradient(90deg, rgba(255,200,60,0.22), rgba(255,216,115,0.08));display:flex;align-items:center;justify-content:center;font-weight:700;color:#2b1f00;font-size:14px}
+.attendance-item .name{font-size:13px}
+.attendance-item .meta{font-size:12px}
+.toggle-input{transform:scale(1.05)}
+.timer-controls{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.small-btn.ghost{border-color:rgba(255,255,255,0.06)}
+
+@media(max-width:900px){
+  .attendance-list{grid-template-columns:repeat(2,minmax(110px,1fr));gap:8px}
+  .attendance-item{padding:8px}
+}
+
+/* Force single visible row on wide screens: reduce item min width so many items fit in one row */
+@media(min-width:1000px){
+  .attendance-list{grid-template-columns:repeat(5,minmax(110px,1fr));grid-auto-rows:1fr}
+  .attendance-item{padding:10px}
+}
+
+/* Games */
+.games-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:12px}
+.game-card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.005));padding:14px;border-radius:12px;box-shadow:0 10px 40px rgba(3,6,12,0.5)}
+.game-card .game-name{font-weight:700}
+
+/* Modal tweaks for games and plays */
+.modal.game-modal{width:640px;max-width:92vw;padding:18px;border-radius:12px}
+.modal .modal-body{max-height:60vh;overflow:auto}
+
+
+/* ACTORS section styling -------------------------------------------------- */
+.tab-panel{padding-bottom:40px}
+
+.actors-card{
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border-radius: var(--card-radius);
+  padding:18px;
+  box-shadow: var(--shadow-1);
+  border: 1px solid rgba(255,255,255,0.03);
+}
+
+.card-header{
+  display:flex;align-items:center;justify-content:space-between;margin-bottom:18px
+}
+.card-header h2{margin:0;font-family:'Playfair Display',serif;font-size:18px;color:var(--text)}
+
+/* Actors grid: 3-4 columns desktop, responsive */
+.actors-list{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem; /* generous spacing */
+  align-items:start;
+}
+
+/* Actor card (ficha de elenco) */
+.actor-card{
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border-radius: 1rem;
+  padding:16px;
+  display:flex;flex-direction:column;gap:12px;
+  transition: transform 220ms cubic-bezier(.2,.9,.2,1), box-shadow 220ms ease, opacity 220ms ease;
+  box-shadow: 0 6px 18px rgba(2,6,23,0.55);
+  border-left: 4px solid transparent;
+  position:relative;overflow:visible;
+}
+
+.actor-card .actor-top{display:flex;align-items:center;justify-content:space-between}
+.actor-name{font-weight:700;font-size:16px}
+.actor-meta{font-size:13px;color:var(--muted)}
+
+/* Badge for total works */
+.count-badge{padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.04);color:var(--text);font-weight:700;font-size:13px}
+
+/* Play list inside card */
+.play-list{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.play-chip{
+  display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.02);font-size:14px;color:var(--text);
+  transition: transform 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+.play-chip .dot{width:10px;height:10px;border-radius:50%}
+.play-chip.chip-two{background:linear-gradient(90deg, rgba(79,195,247,0.06), rgba(79,195,247,0.02));border-color:rgba(79,195,247,0.06)}
+.play-chip.chip-three{background:linear-gradient(90deg, rgba(255,213,79,0.06), rgba(255,213,79,0.02));border-color:rgba(255,213,79,0.06)}
+.play-chip .title{font-weight:600}
+
+/* Hover effect for play chip (elevate and slight color shift) */
+.play-chip:hover{transform:translateY(-6px);box-shadow:0 10px 24px rgba(2,6,23,0.45)}
+
+/* Tooltip for play (if description is present) */
+.play-chip[data-desc]:hover:after{
+  content: attr(data-desc);
+  position:absolute;left:0;transform:translateY(-110%);
+  background: rgba(11,18,32,0.96);color:var(--text);padding:8px 10px;border-radius:8px;font-size:13px;white-space:nowrap;z-index:50;box-shadow:var(--shadow-2);
+}
+
+/* Actor card entrance animation */
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.actor-card{animation:fadeUp 420ms ease both}
+
+/* Card hover: lift and accent border; also dim siblings via parent hover state */
+.actor-card:hover{transform:translateY(-8px);box-shadow:0 20px 48px rgba(2,6,23,0.6);border-left-color:var(--accent)}
+
+/* When container hovered, dim non-hovered cards */
+.actors-list:hover .actor-card{opacity:0.85;filter:grayscale(0.02)}
+.actors-list .actor-card:hover{opacity:1;filter:none}
+
+/* Responsive grid tweak: 4 columns on wide screens, 3 cols on medium */
+@media(min-width:1400px){ .actors-list{grid-template-columns: repeat(4, minmax(220px,1fr));} }
+@media(min-width:1000px) and (max-width:1399px){ .actors-list{grid-template-columns: repeat(3, minmax(220px,1fr));} }
+@media(max-width:599px){
+  .actors-list{grid-template-columns:1fr;gap:1rem}
+  .actor-card{padding:14px}
+}
+
+/* small utility classes */
+.small-muted{font-size:12px;color:var(--muted)}
+
+/* play count pills (2 / 3) refined */
+.count-badge.two{background:linear-gradient(90deg, rgba(79,195,247,0.14), rgba(79,195,247,0.06));color:var(--sky)}
+.count-badge.three{background:linear-gradient(90deg, rgba(255,213,79,0.14), rgba(255,213,79,0.06));color:var(--gold)}
+
+/* Accessibility: focus styles */
+.actor-card:focus-within{outline:2px solid rgba(255,255,255,0.06);outline-offset:4px}
+
+/* Keep other existing components reasonably compatible */
+.card{background:transparent;border-radius:var(--card-radius);padding:18px}
+.tab-panel .card .card-body{padding:0}
+
+/* subtle microinteraction for actor name */
+.actor-name{display:inline-block;transition:color 160ms ease}
+.actor-card:hover .actor-name{color:var(--accent)}
+
+/* ensure play-chip tooltips appear above */
+.play-chip{position:relative}
+
+/* print: simplified */
+@media print{
+  body{background:#fff;color:#000}
+  .actors-list{grid-template-columns:1fr}
+  .actor-card{box-shadow:none;border:1px solid #ddd}
+  .play-chip:after{display:none}
+}
+
+/* End of actors-focused stylesheet */

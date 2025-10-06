@@ -13,7 +13,8 @@ window.defaultPlays = [
   { id: "trencito", title: "Trencito de la Alegría", maxActors: 3, info: "Obra 11", actores: ["Franco", "Euge", "Lorenzo"], genre: 'comedy'},
   { id: "extraterrestres", title: "Extraterrestres", maxActors: 3, info: "Obra 12", actores: ["Franco", "Euge", "Lorenzo"], genre: 'drama'},
   { id: "confesion", title: "Confesión", maxActors: 2, info: "Obra 13", actores: ["Juan Cruz", "Guille"], genre: 'drama'},
-  { id: "cita", title: "Cita a Ciegas", maxActors: 2, info: "Obra 14", actores: ["Euge", "Axel"], genre: 'comedy'}
+  { id: "cita", title: "Cita a Ciegas", maxActors: 2, info: "Obra 14", actores: ["Euge", "Axel"], genre: 'comedy'},
+  { id: "presentador", title: "Presentador", maxActors: 1, info: "Obra 15", actores: ["Axel"], genre: 'Comedy'}
 ];
 
 window.defaultActors = Array.from(new Set(window.defaultPlays.flatMap(p => p.actores))).map((name, i) => ({

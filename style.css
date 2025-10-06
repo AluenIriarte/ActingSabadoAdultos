@@ -44,7 +44,7 @@ body{
   --muted:#c2c8d1;
   --text: #f6f7fb; /* pale text */
   --accent: #8f2d3f; /* deep burgundy */
-  --gold: #ffd873; /* warm gold for 3-actor */
+  --gold: #FFD700; /* vivid classic gold */
   --sky: #6fd3ff; /* light sky blue for 2-actor */
   --solo-bg: rgba(143,45,63,0.08);
   --two-bg: rgba(111,211,255,0.06);
@@ -121,8 +121,9 @@ body::before{
 
 .attendance-list{display:flex;flex-direction:row;align-items:center;gap:10px;overflow-x:auto;padding:8px;white-space:nowrap}
 .attendance-item{min-width:120px;flex:0 0 auto;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));padding:10px;border-radius:12px;display:inline-flex;flex-direction:column;align-items:center;gap:8px;border:1px solid rgba(255,255,255,0.02);transition:transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease}
-.attendance-item.selected{box-shadow:0 22px 60px rgba(255,215,70,0.28);transform:translateY(-6px);border-color:rgba(255,215,70,0.6);background:linear-gradient(90deg, rgba(255,218,74,0.14), rgba(255,218,74,0.06));}
-.attendance-item .initials{width:44px;height:44px;border-radius:8px;background:linear-gradient(90deg, rgba(255,218,74,0.3), rgba(255,218,74,0.12));display:flex;align-items:center;justify-content:center;font-weight:800;color:#2b1f00}
+.attendance-item.selected{box-shadow:0 28px 90px rgba(255,215,0,0.22);transform:translateY(-6px);border-color:var(--gold);background:linear-gradient(90deg, rgba(255,223,80,0.16), rgba(255,244,173,0.04));}
+.attendance-item.selected::after{content:'★';position:absolute;right:8px;top:8px;color:var(--gold);font-size:12px;text-shadow:0 4px 12px rgba(255,215,0,0.18)}
+.attendance-item .initials{width:44px;height:44px;border-radius:8px;background:linear-gradient(90deg, rgba(255,223,80,0.4), rgba(255,244,173,0.12));display:flex;align-items:center;justify-content:center;font-weight:900;color:#2b1f00}
 .attendance-item .name{font-size:13px;color:var(--text);text-align:center}
 .attendance-item .meta{font-size:12px;color:var(--muted)}
 .attendance-item:hover{transform:translateY(-4px)}
@@ -136,7 +137,8 @@ body::before{
 .clase-scene{padding:12px;border-radius:10px;background:rgba(14,18,22,0.55);margin-bottom:12px;animation:sceneIn 280ms ease;border-left:4px solid rgba(255,255,255,0.02)}
 .clase-scene .title{font-weight:700}
 .clase-scene .meta{color:var(--muted);font-size:13px}
-.clase-scene.locked{border:1px solid rgba(255,200,60,0.36);box-shadow:0 18px 40px rgba(255,200,60,0.08);background:linear-gradient(90deg, rgba(255,216,115,0.03), rgba(255,216,115,0.01))}
+.clase-scene.locked{border-left:6px solid var(--gold);box-shadow:0 22px 68px rgba(255,207,58,0.18);background:linear-gradient(90deg, rgba(255,235,174,0.06), rgba(255,243,204,0.02));position:relative}
+.clase-scene.locked::before{content:'★';position:absolute;right:12px;top:12px;color:var(--gold);font-size:18px;text-shadow:0 4px 18px rgba(255,207,58,0.25)}
 .clase-scene{cursor:pointer}
 
 @keyframes sceneIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -205,8 +207,8 @@ body::before{
 /* horizontal scrollable attendance list (desktop) — wraps on small screens */
 /* Two-row grid for attendance: shows up to two rows; scroll vertically if overflow in height */
 .attendance-list{display:grid;grid-template-columns:repeat(5,minmax(120px,1fr));grid-auto-rows:min-content;gap:12px;padding:8px;align-items:start;justify-items:stretch}
-.attendance-item{width:100%;max-width:180px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));padding:10px;border-radius:10px;display:flex;flex-direction:column;align-items:center;gap:6px;border:1px solid rgba(255,255,255,0.02);transition:transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease}
-.attendance-item .initials{width:36px;height:36px;border-radius:8px;background:linear-gradient(90deg, rgba(255,200,60,0.22), rgba(255,216,115,0.08));display:flex;align-items:center;justify-content:center;font-weight:700;color:#2b1f00;font-size:14px}
+.attendance-item{width:100%;max-width:180px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));padding:10px;border-radius:10px;display:flex;flex-direction:column;align-items:center;gap:6px;border:1px solid rgba(255,255,255,0.02);transition:transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;position:relative}
+.attendance-item .initials{width:36px;height:36px;border-radius:8px;background:linear-gradient(90deg, rgba(255,223,80,0.4), rgba(255,244,173,0.12));display:flex;align-items:center;justify-content:center;font-weight:900;color:#2b1f00;font-size:14px}
 .attendance-item .name{font-size:13px}
 .attendance-item .meta{font-size:12px}
 .toggle-input{transform:scale(1.05)}

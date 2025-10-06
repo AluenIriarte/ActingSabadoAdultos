@@ -180,7 +180,7 @@ body::before{
 .actor-list{color:var(--muted);margin-top:8px}
 
 /* play chips variants for actors list */
-.play-chip.chip-one{background:var(--solo-bg);border-color:rgba(143,45,63,0.18);color:var(--accent);}
+.play-chip.chip-one{background:linear-gradient(90deg, rgba(199,63,82,0.18), rgba(199,63,82,0.08));border-color:rgba(199,63,82,0.28);color:#ffdad6;font-weight:700}
 .play-chip.chip-two{background:var(--two-bg);border-color:rgba(111,211,255,0.18);color:#054a66}
 .play-chip.chip-three{background:var(--three-bg);border-color:rgba(255,216,115,0.18);color:#6b4a00}
 
@@ -188,7 +188,7 @@ body::before{
 .play-meta-solo{display:inline-block;padding:6px 8px;border-radius:999px;background:rgba(183,110,121,0.12);color:var(--accent);font-weight:700;margin-left:8px}
 
 /* Play-card color variants to match actor chips */
-.play-card.one{border-left:6px solid rgba(143,45,63,0.18);background:linear-gradient(180deg, rgba(143,45,63,0.02), rgba(255,255,255,0.005));}
+.play-card.one{border-left:6px solid rgba(199,63,82,0.42);background:linear-gradient(180deg, rgba(199,63,82,0.06), rgba(255,255,255,0.005));}
 .play-card.two{border-left:6px solid rgba(111,211,255,0.12);background:linear-gradient(180deg, rgba(111,211,255,0.02), rgba(255,255,255,0.005));}
 .play-card.three{border-left:6px solid rgba(255,216,115,0.12);background:linear-gradient(180deg, rgba(255,216,115,0.02), rgba(255,255,255,0.005));}
 

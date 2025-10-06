@@ -345,15 +345,13 @@ document.addEventListener('DOMContentLoaded', () => {
         return { sel, used };
       })();
 
-      // Missing actors after greedy
+      // Missing actors after greedy — ensure NO actor is left out: always build adhoc partitions if needed
       const usedSet = greedyRes.used || new Set();
       const missing = target.filter(a => !usedSet.has(a));
 
-      // If missing, optionally build adhoc partitions preferring 5/4 when odd — only when allowAdhoc is checked
+      // Build adhoc partitions to cover any missing actors (guaranteed fallback)
       const adhocScenes = [];
-      const allowAdhocEl = document.getElementById('allowAdhoc');
-      const allowAdhoc = allowAdhocEl ? !!allowAdhocEl.checked : false;
-      if(missing.length && allowAdhoc){
+      if(missing.length){
         const makePartitions = (arr)=>{
           const s = arr.slice(); const groups = [];
           while(s.length){
@@ -371,18 +369,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
 
-      if(missing.length && !allowAdhoc){
-        // Inform user that some actors couldn't be covered and adhoc is disabled
-        claseResult.innerHTML += `<div class="clase-empty">No se pudieron cubrir ${missing.length} actor(es) con las obras existentes. Activa "Permitir escenas nuevas" para generar escenas ad-hoc.</div>`;
-      }
-
       const finalSel = (greedyRes.sel || []).concat(adhocScenes);
       const resultScenes = (lockedScenes && lockedScenes.length) ? lockedScenes.concat(finalSel) : finalSel;
       lastRenderedScenes = resultScenes.slice();
-      claseResult.innerHTML = renderCoverToHTML(resultScenes);
+      // If we created adhoc scenes, show a small informative note so user sees it happened
+      let noteHTML = '';
+      if(adhocScenes.length){
+        noteHTML = `<div class="clase-note" style="margin-bottom:8px;padding:8px 10px;border-radius:8px;background:linear-gradient(90deg, rgba(255,215,0,0.06), rgba(255,215,0,0.02));border:1px solid rgba(255,215,0,0.14);color:var(--text);font-weight:600">Se generaron ${adhocScenes.length} escena(s) ad-hoc para cubrir ${missing.length} actor(es).</div>`;
+      }
+      claseResult.innerHTML = noteHTML + renderCoverToHTML(resultScenes);
       attachSceneHandlers();
       updateClaseStats(resultScenes.length);
-      lastClaseFingerprint = fingerprintCover(resultScenes);
+  lastClaseFingerprint = fingerprintCover(resultScenes);
       // Clear one-time locks after generation (they only apply during the generation event)
       setTimeout(()=>{
         lockedScenes = [];
